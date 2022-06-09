@@ -8,3 +8,5 @@ Description: XXXXX
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+URL: https://github.com/kokitsuyuzaki/Machima
+BugReports: https://github.com/kokitsuyuzaki/Machima/issues
