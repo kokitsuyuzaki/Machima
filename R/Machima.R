@@ -111,6 +111,10 @@ Machima <- function(X_RNA, X_Epi, T=NULL,
     L1_W_RNA, L2_W_RNA, L1_H_RNA, L2_H_RNA,
     L1_T, L2_T, L1_H_Epi, L2_H_Epi,
     J, Beta, thr, viz, figdir, num.iter, verbose){
+    # Check X_RNA
+    stopifnot(is.matrix(X_RNA))
+    # Check X_Epi
+    stopifnot(is.matrix(X_Epi))
     # Check T
     check1 <- is.matrix(T)
     check2 <- is.null(T)
