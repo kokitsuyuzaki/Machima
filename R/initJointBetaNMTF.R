@@ -17,11 +17,6 @@
         out1_2 <- .normalizeCols(out1_1$V)
         W_RNA <- t(t(out1_1$U) * out1_2$normA)
         H_RNA <- t(out1_2$A)
-        # # NMF with Epigenome
-        # out1_3 <- .reArrangeOuts(.returnBestNMF(X_Epi, J=J), X_Epi)
-        # out1_4 <- .normalizeCols(out1_3$V)
-        # W_Epi <- t(t(out1_3$U) * out1_4$normA)
-        # H_Epi <- t(out1_4$A)
     }
     if(init == "Random"){
         W_RNA <- .normalizeCols(
@@ -35,9 +30,6 @@
         nrow=J, ncol=ncol(X_Epi)))$A
     W_Epi <- X_Epi %*% t(H_Epi)
     if(!fixT){
-        # W_Epi -> T
-        # T <- .returnBestNMFwithV(X=W_Epi,
-        #     initV=t(W_RNA), J=nrow(W_RNA))$U
         nr <- nrow(X_Epi)
         nc <- ncol(X_RNA)
         T <- matrix(runif(nr*nc), nrow=nr, ncol=nc)
@@ -62,11 +54,6 @@
         out1_2 <- .normalizeCols(out1_1$V)
         W_RNA2 <- t(t(out1_1$U) * out1_2$normA)
         H_RNA <- t(out1_2$A)
-        # # NMF with Epigenome
-        # out1_3 <- .reArrangeOuts(.returnBestNMF(X_Epi, J=J), X_Epi)
-        # out1_4 <- .normalizeCols(out1_3$V)
-        # W_Epi <- t(t(out1_3$U) * out1_4$normA)
-        # H_Epi <- t(out1_4$A)
     }
     if(init == "Random"){
         W_RNA2 <- .normalizeCols(

@@ -1,24 +1,3 @@
-
-# .returnBestNMFwithU <- function(X, initU, J){
-#     outs <- lapply(seq(1), function(x){
-#         NMF(X, initU=initU, fixU=TRUE, J=J,
-#             num.iter=30, algorithm="Frobenius")
-#     })
-#     bestfit <- unlist(lapply(outs, function(x){rev(x$RecError)[1]}))
-#     bestfit <- which(bestfit == min(bestfit))[1]
-#     outs[[bestfit]]
-# }
-
-# .returnBestNMFwithV <- function(X, initV, J){
-#     outs <- lapply(seq(1), function(x){
-#         NMF(X, initV=initV, fixV=TRUE, J=J,
-#             num.iter=30, algorithm="Frobenius")
-#     })
-#     bestfit <- unlist(lapply(outs, function(x){rev(x$RecError)[1]}))
-#     bestfit <- which(bestfit == min(bestfit))[1]
-#     outs[[bestfit]]
-# }
-
 # Some Helper Functions
 .normalizeCols <- function(A){
     normA <- apply(A, 2, function(a){norm(as.matrix(a), "F")})
