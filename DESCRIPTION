@@ -1,6 +1,6 @@
 Package: Machima
 Type: Package
-Title: Cross-omics Cell-type Deconvolution by Joint Non-negative Trifactorization
+Title: Cross-omics and chromosome Cell-type Deconvolution by Joint Non-negative Trifactorization
 Version: 0.1.0
 Author: Koki Tsuyuzaki
 Maintainer: Koki Tsuyuzaki <k.t.the-answer@hotmail.co.jp>
