@@ -1,10 +1,10 @@
 Package: Machima
 Type: Package
-Title: Cross-omics and chromosome Cell-type Deconvolution by Joint Non-negative Trifactorization
-Version: 0.1.0
+Title: Cross-Omics and Chromosome Cell-Type Deconvolution by Joint Non-Negative Matrix Trifactorization
+Version: 0.99.0
 Author: Koki Tsuyuzaki
 Maintainer: Koki Tsuyuzaki <k.t.the-answer@hotmail.co.jp>
-Description: XXXXX
+Description: Gene expression matrix and epigenomic feature matrix are decomposed at once by non-negative matrix trifactorization algorithm. For the details of the method, see the reference section of GitHub README.md <https://github.com/kokitsuyuzaki/Machima>.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -15,4 +15,8 @@ Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Imports: 
-    nnTensor
+    nnTensor,
+    fields,
+    graphics,
+    grDevices,
+    stats

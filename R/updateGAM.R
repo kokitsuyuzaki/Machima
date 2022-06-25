@@ -1,4 +1,3 @@
-# Update GAM matrix
 .updateGAM <- function(X_RNA, X_Epi, W_RNA, H_Epi){
     if(is.matrix(X_RNA) && is.matrix(X_Epi)){
         X_GAM <- W_RNA %*% H_Epi

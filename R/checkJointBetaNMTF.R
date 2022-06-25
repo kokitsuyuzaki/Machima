@@ -1,6 +1,7 @@
-# Check
 .checkJointBetaNMTF <- function(X_RNA, X_Epi, T,
-    fixW_RNA, fixH_RNA, fixT, pseudocount,
+    fixW_RNA, fixH_RNA, fixT,
+    orthW_RNA, orthH_RNA, orthT, orthH_Epi,
+    pseudocount,
     L1_W_RNA, L2_W_RNA, L1_H_RNA, L2_H_RNA,
     L1_T, L2_T, L1_H_Epi, L2_H_Epi,
     J, Beta, thr, viz, figdir, num.iter, verbose){
@@ -54,6 +55,11 @@
     stopifnot(is.logical(fixW_RNA))
     stopifnot(is.logical(fixH_RNA))
     stopifnot(is.logical(fixT))
+    # Check Orthogonal
+    stopifnot(is.logical(orthW_RNA))
+    stopifnot(is.logical(orthH_RNA))
+    stopifnot(is.logical(orthT))
+    stopifnot(is.logical(orthH_Epi))
     # Check Pseudo-count
     stopifnot(pseudocount >= 0)
     # Check Regularization Parameters
@@ -75,7 +81,7 @@
         })
     }
     # Check Beta
-    stopifnot(Beta >= 0)
+    stopifnot(is.numeric(Beta))
     # Check thr
     stopifnot(thr >= 0)
     # viz

@@ -2,7 +2,11 @@
 % Please edit documentation in R/Machima.R
 \name{Machima}
 \alias{Machima}
-\title{Title}
+\title{Cross-Omics and Chromosome Cell-Type Deconvolution by Joint Non-Negative Matrix Trifactorization
+Gene expression matrix and epigenomic feature matrix are decomposed at once
+by non-negative matrix trifactorization algorithm.
+For the details of the method, see the reference section of GitHub README.md
+<https://github.com/kokitsuyuzaki/Machima>.}
 \usage{
 Machima(
   X_RNA,
@@ -11,6 +15,10 @@ Machima(
   fixW_RNA = TRUE,
   fixH_RNA = TRUE,
   fixT = FALSE,
+  orthW_RNA = FALSE,
+  orthH_RNA = FALSE,
+  orthT = FALSE,
+  orthH_Epi = FALSE,
   pseudocount = 1e-10,
   L1_W_RNA = 1e-10,
   L2_W_RNA = 1e-10,
@@ -30,12 +38,73 @@ Machima(
   verbose = FALSE
 )
 }
-\value{
+\arguments{
+\item{X_RNA}{Single-cell RNA-Seq matrix (n x m)}
 
+\item{X_Epi}{Bulk Epigenome feature matrix (l x o)}
+
+\item{T}{Coefficient matrix to connect the dimension of X_RNA and X_Epi (l x n)}
+
+\item{fixW_RNA}{Fix value option of W_RNA (for Transfer Learning)}
+
+\item{fixH_RNA}{Fix value option of H_RNA (for Transfer Learning)}
+
+\item{fixT}{Fix value option of T (for Transfer Learning)}
+
+\item{orthW_RNA}{Orthogonal option of W_RNA (for uniqueness)}
+
+\item{orthH_RNA}{Orthogonal option of H_RNA (for uniqueness)}
+
+\item{orthT}{Orthogonal option of T (for uniqueness)}
+
+\item{orthH_Epi}{Orthogonal option of H_Epi (for uniqueness)}
+
+\item{pseudocount}{Pseudo count}
+
+\item{L1_W_RNA}{Parameter for L1-norm regularization of W_RNA}
+
+\item{L2_W_RNA}{Parameter for L2-norm regularization of W_RNA}
+
+\item{L1_H_RNA}{Parameter for L1-norm regularization of H_RNA}
+
+\item{L2_H_RNA}{Parameter for L2-norm regularization of H_RNA}
+
+\item{L1_T}{Parameter for L1-norm regularization of T}
+
+\item{L2_T}{Parameter for L2-norm regularization of T}
+
+\item{L1_H_Epi}{Parameter for L1-norm regularization of H_Epi}
+
+\item{L2_H_Epi}{Parameter for L2-norm regularization of H_Epi}
+
+\item{J}{Rank parameter to decompose}
+
+\item{Beta}{Parameter of Beta-divergence}
+
+\item{thr}{The threshold to stop the iteration}
+
+\item{viz}{Whether the temporal result is visualized (Default: FALSE)}
+
+\item{figdir}{The figure directory}
+
+\item{init}{Initial value algorithm}
+
+\item{num.iter}{The number of iteration}
+
+\item{verbose}{Verbose option}
+}
+\value{
+A list containing the Joint-nonnegative Trifactorization
 }
 \description{
-Title
+Cross-Omics and Chromosome Cell-Type Deconvolution by Joint Non-Negative Matrix Trifactorization
+Gene expression matrix and epigenomic feature matrix are decomposed at once
+by non-negative matrix trifactorization algorithm.
+For the details of the method, see the reference section of GitHub README.md
+<https://github.com/kokitsuyuzaki/Machima>.
 }
 \examples{
-
+X_RNA <- matrix(runif(20*30), nrow=20, ncol=30)
+X_Epi <- matrix(runif(15*25), nrow=15, ncol=25)
+out <- Machima(X_RNA, X_Epi, T=NULL, verbose=TRUE)
 }
