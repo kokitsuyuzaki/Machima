@@ -1,4 +1,4 @@
-#' Cross-Omics and Chromosome Cell-Type Deconvolution by Joint Non-Negative Matrix Trifactorization
+#' Cross-Omics Cell-Type Deconvolution by Joint Non-Negative Matrix Trifactorization
 #' Gene expression matrix and epigenomic feature matrix are decomposed at once
 #' by non-negative matrix trifactorization algorithm.
 #' For the details of the method, see the reference section of GitHub README.md
