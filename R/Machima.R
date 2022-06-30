@@ -28,7 +28,7 @@
 #' @param thr The threshold to stop the iteration (Default: 1e-10)
 #' @param viz Whether the temporal result is visualized (Default: FALSE)
 #' @param figdir The figure directory (Default: NULL)
-#' @param init Initial value algorithm (Default: "NMF")
+#' @param init Initial value algorithm (Default: "RandomEpi")
 #' @param num.iter The number of iteration (Default: 30)
 #' @param verbose Verbose option (Default: FALSE)
 #' @return A list containing the Joint-nonnegative Trifactorization
@@ -51,7 +51,7 @@ Machima <- function(X_RNA, X_Epi, T=NULL,
     L1_T=1e-10, L2_T=1e-10,
     L1_H_Epi=1e-10, L2_H_Epi=1e-10,
     J=3, Beta=2, root=FALSE, thr=1e-10, viz=FALSE, figdir=NULL,
-    init = c("NMF", "Random"),
+    init = c("RandomEpi", "RandomRNA", "Random", "NMFAlign"),
     num.iter=30, verbose=FALSE){
     # Argument Check
     init <- match.arg(init)

@@ -34,7 +34,7 @@ Machima(
   thr = 1e-10,
   viz = FALSE,
   figdir = NULL,
-  init = c("NMF", "Random"),
+  init = c("RandomEpi", "RandomRNA", "Random", "NMFAlign"),
   num.iter = 30,
   verbose = FALSE
 )
@@ -90,7 +90,7 @@ Machima(
 
 \item{figdir}{The figure directory (Default: NULL)}
 
-\item{init}{Initial value algorithm (Default: "NMF")}
+\item{init}{Initial value algorithm (Default: "RandomEpi")}
 
 \item{num.iter}{The number of iteration (Default: 30)}
 
