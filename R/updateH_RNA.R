@@ -14,7 +14,8 @@
     WH <- W_RNA %*% H_RNA
     numer <- t(t(WH^(Beta - 2) * X_RNA) %*% W_RNA)
     if(orthH_RNA){
-        denom <- t(X_RNA %*% W_RNA %*% H_RNA %*% t(H_RNA)) + L1_H_RNA + L2_H_RNA * H_RNA
+        denom <- (H_RNA %*% t(H_RNA) %*% t(W_RNA) %*% X_RNA) + L1_H_RNA + L2_H_RNA * H_RNA
+        t(H_RNA) %*% H_RNA %*% t(X_RNA) %*% W_RNA
     }else{
         denom <- t(t(WH^(Beta - 1)) %*% W_RNA) + L1_H_RNA + L2_H_RNA * H_RNA
     }
@@ -29,7 +30,7 @@
     denom <- Reduce('+',
         lapply(seq_along(X_RNA), function(x){
         if(orthH_RNA){
-            out <- Pi_RNA[[x]] * (t(X_RNA[[x]] %*% W_RNA[[x]] %*% H_RNA %*% t(H_RNA)) + L1_H_RNA + L2_H_RNA * H_RNA)
+            out <- Pi_RNA[[x]] * ((H_RNA %*% t(H_RNA) %*% t(W_RNA[[x]]) %*% X_RNA[[x]]) + L1_H_RNA + L2_H_RNA * H_RNA)
         }else{
             out <- Pi_RNA[[x]] * (t(t((W_RNA[[x]] %*% H_RNA)^(Beta - 1)) %*% W_RNA[[x]]) + L1_H_RNA + L2_H_RNA * H_RNA)
         }

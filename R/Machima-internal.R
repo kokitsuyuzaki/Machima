@@ -153,5 +153,5 @@ image.plot2 <- function(A, ...){
 }
 
 .weight <- function(X){
-    1 / sqrt(sum(X^2))
+    1 / sum(X^2)
 }
