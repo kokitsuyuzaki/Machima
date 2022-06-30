@@ -4,7 +4,7 @@
 X_RNA <- matrix(runif(20*30), nrow=20, ncol=30)
 X_Epi <- matrix(runif(15*25), nrow=15, ncol=25)
 
-out1 <- Machima(X_RNA, X_Epi, T=NULL, verbose=TRUE)
+out1 <- Machima(X_RNA, X_Epi, T=NULL)
 
 expect_true(is.list(out1))
 expect_equal(dim(out1$W_RNA), c(20, 3))
@@ -18,7 +18,7 @@ expect_equal(dim(out1$T), c(15, 20))
 #
 T <- matrix(runif(15*20), nrow=15, ncol=20)
 
-out2 <- Machima(X_RNA, X_Epi, T=T, verbose=TRUE)
+out2 <- Machima(X_RNA, X_Epi, T=T)
 
 expect_true(is.list(out2))
 expect_equal(dim(out2$W_RNA), c(20, 3))
@@ -45,7 +45,7 @@ X_Epis <- list(
     X_Epi_4 = matrix(runif(30*25), nrow=30, ncol=25),
     X_Epi_5 = matrix(runif(40*25), nrow=40, ncol=25))
 
-out3 <- Machima(X_RNAs, X_Epis, T=NULL, verbose=TRUE)
+out3 <- Machima(X_RNAs, X_Epis, T=NULL)
 
 expect_true(is.list(out3))
 expect_true(is.list(out3$W_RNA))
@@ -74,7 +74,7 @@ Ts <- list(
 	T_4 = matrix(runif(30*35), nrow=30, ncol=35),
 	T_5 = matrix(runif(40*40), nrow=40, ncol=40))
 
-out4 <- Machima(X_RNAs, X_Epis, T=Ts, verbose=TRUE)
+out4 <- Machima(X_RNAs, X_Epis, T=Ts)
 
 expect_true(is.list(out4))
 expect_true(is.list(out4$W_RNA))

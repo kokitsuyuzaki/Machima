@@ -31,7 +31,7 @@ X_Epi <- T %*% X_GAM
 #
 # Single Matrix mode
 #
-out1 <- Machima(X_RNA, X_Epi, Beta=1, viz=TRUE)
+out1 <- Machima(X_RNA, X_Epi, Beta=1, viz=TRUE, root=TRUE)
 
 #
 # Single Matrix mode with T
@@ -42,8 +42,8 @@ out2 <- Machima(X_RNA, X_Epi, Beta=1, T=T, viz=TRUE)
 # Multiple Matrices mode
 #
 idx_RNA <- split(seq(nrow(X_RNA)), 1:3)
-X_RNAs <- lapply(idx_RNA, function(x){X_RNA[x, ]})
 idx_Epi <- split(seq(nrow(X_Epi)), 1:3)
+X_RNAs <- lapply(idx_RNA, function(x){X_RNA[x, ]})
 X_Epis <- lapply(idx_Epi, function(x){X_Epi[x, ]})
 
 out3 <- Machima(X_RNAs, X_Epis, Beta=1, viz=TRUE)

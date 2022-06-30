@@ -1,10 +1,10 @@
-.checkJointBetaNMTF <- function(X_RNA, X_Epi, T,
+.checkMachima <- function(X_RNA, X_Epi, T,
     fixW_RNA, fixH_RNA, fixT,
     orthW_RNA, orthH_RNA, orthT, orthH_Epi,
     pseudocount,
     L1_W_RNA, L2_W_RNA, L1_H_RNA, L2_H_RNA,
     L1_T, L2_T, L1_H_Epi, L2_H_Epi,
-    J, Beta, thr, viz, figdir, num.iter, verbose){
+    J, Beta, root, thr, viz, figdir, num.iter, verbose){
     # Check X_RNA
     check1 <- is.matrix(X_RNA)
     check2 <- is.list(X_RNA)
@@ -13,6 +13,14 @@
             "a list containing multiple matrices")
         stop(msg)
     }
+    if(check1){
+        stopifnot(!all(X_RNA == 0))
+    }
+    if(check2){
+        lapply(X_RNA, function(x){
+            stopifnot(!all(x == 0))
+        })
+    }
     # Check X_Epi
     check3 <- is.matrix(X_Epi)
     check4 <- is.list(X_Epi)
@@ -20,6 +28,14 @@
         msg <- paste0("Please specify X_Epi as a matrix or ",
             "a list containing multiple matrices")
         stop(msg)
+    }
+    if(check3){
+        stopifnot(!all(X_Epi == 0))
+    }
+    if(check4){
+        lapply(X_Epi, function(x){
+            stopifnot(!all(x == 0))
+        })
     }
     # Check X_RNA and X_Epi
     if((check2 && !check4) || (!check2 && check4)){
@@ -82,6 +98,8 @@
     }
     # Check Beta
     stopifnot(is.numeric(Beta))
+    # root
+    stopifnot(is.logical(root))
     # Check thr
     stopifnot(thr >= 0)
     # viz

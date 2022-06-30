@@ -2,7 +2,7 @@
 % Please edit documentation in R/Machima.R
 \name{Machima}
 \alias{Machima}
-\title{Cross-Omics and Chromosome Cell-Type Deconvolution by Joint Non-Negative Matrix Trifactorization
+\title{Cross-Omics Cell-Type Deconvolution by Joint Non-Negative Matrix Trifactorization
 Gene expression matrix and epigenomic feature matrix are decomposed at once
 by non-negative matrix trifactorization algorithm.
 For the details of the method, see the reference section of GitHub README.md
@@ -30,6 +30,7 @@ Machima(
   L2_H_Epi = 1e-10,
   J = 3,
   Beta = 2,
+  root = FALSE,
   thr = 1e-10,
   viz = FALSE,
   figdir = NULL,
@@ -81,6 +82,8 @@ Machima(
 
 \item{Beta}{Parameter of Beta-divergence}
 
+\item{root}{Option to add sqrt to the update equation (Default: FALSE)}
+
 \item{thr}{The threshold to stop the iteration}
 
 \item{viz}{Whether the temporal result is visualized (Default: FALSE)}
@@ -97,7 +100,7 @@ Machima(
 A list containing the Joint-nonnegative Trifactorization
 }
 \description{
-Cross-Omics and Chromosome Cell-Type Deconvolution by Joint Non-Negative Matrix Trifactorization
+Cross-Omics Cell-Type Deconvolution by Joint Non-Negative Matrix Trifactorization
 Gene expression matrix and epigenomic feature matrix are decomposed at once
 by non-negative matrix trifactorization algorithm.
 For the details of the method, see the reference section of GitHub README.md

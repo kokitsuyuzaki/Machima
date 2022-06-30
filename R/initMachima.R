@@ -1,13 +1,13 @@
-.initJointBetaNMTF <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr){
+.initMachima <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr){
     if(is.matrix(X_RNA) && is.matrix(X_Epi)){
-        int <- .initJointBetaNMTF_Matrix(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr)
+        int <- .initMachima_Matrix(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr)
     }else{
-        int <- .initJointBetaNMTF_List(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr)
+        int <- .initMachima_List(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr)
     }
     int
 }
 
-.initJointBetaNMTF_Matrix <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr){
+.initMachima_Matrix <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr){
     X_RNA[which(X_RNA == 0)] <- pseudocount
     X_Epi[which(X_Epi == 0)] <- pseudocount
     if(init == "NMF"){
@@ -43,16 +43,21 @@
             T <- matrix(runif(nr*nc), nrow=nr, ncol=nc)
         }
     }
+    # Weight
+    Pi_RNA <- .weight(X_RNA)
+    Pi_Epi <- .weight(X_Epi)
+    # Error
     RecError <- c()
     RelChange <- c()
     RecError[1] <- thr * 10
     RelChange[1] <- thr * 10
     list(X_RNA=X_RNA, X_Epi=X_Epi,
         W_RNA=W_RNA, H_RNA=H_RNA, H_Epi=H_Epi,
-        T=T, RecError=RecError, RelChange=RelChange)
+        T=T, Pi_RNA=Pi_RNA, Pi_Epi=Pi_Epi,
+        RecError=RecError, RelChange=RelChange)
 }
 
-.initJointBetaNMTF_List <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr){
+.initMachima_List <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr){
     X_RNA <- lapply(X_RNA, function(x){
         x[which(x == 0)] <- pseudocount
         x
@@ -99,11 +104,16 @@
             })
         }
     }
+    # Weight
+    Pi_RNA <- lapply(X_RNA, .weight)
+    Pi_Epi <- lapply(X_Epi, .weight)
+    # Error
     RecError <- c()
     RelChange <- c()
     RecError[1] <- thr * 10
     RelChange[1] <- thr * 10
     list(X_RNA=X_RNA, X_Epi=X_Epi,
         W_RNA=W_RNA, H_RNA=H_RNA, H_Epi=H_Epi,
-        T=T, RecError=RecError, RelChange=RelChange)
+        T=T, Pi_RNA=Pi_RNA, Pi_Epi=Pi_Epi,
+        RecError=RecError, RelChange=RelChange)
 }

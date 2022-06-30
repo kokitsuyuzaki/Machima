@@ -60,21 +60,41 @@
     outs[[bestfit]]
 }
 
-.multiImagePlots3 <- function(X_RNA, X_GAM, X_Epi){
+.multiImagePlots3 <- function(X_RNA, W_RNA, H_RNA, X_GAM, X_Epi, H_Epi, T){
     if(is.matrix(X_RNA) && is.matrix(X_Epi)){
-        .multiImagePlots2(list(X_RNA, X_GAM, X_Epi))
+        .multiImagePlots2_Matrix(list(X_RNA, W_RNA, H_RNA, X_GAM, X_Epi, H_Epi, T))
     }else{
         X_RNA2 <- do.call("rbind", X_RNA)
+        W_RNA2 <- do.call("rbind", W_RNA)
         X_Epi2 <- do.call("rbind", X_Epi)
-        .multiImagePlots2(list(X_RNA2, X_GAM, X_Epi2))
+        .multiImagePlots2_List(list(X_RNA2, W_RNA2, H_RNA, X_GAM, X_Epi2, H_Epi, T))
     }
 }
 
-.multiImagePlots2 <- function(inputList){
-    layout(t(1:3))
-    image.plot2(inputList[[1]])
-    image.plot2(inputList[[2]])
-    image.plot2(inputList[[3]])
+.multiImagePlots2_Matrix <- function(inputList){
+    layout(rbind(1:4, 5:8))
+    image.plot2(inputList[[1]], main="X_RNA")
+    image.plot2(inputList[[2]], main="W_RNA")
+    image.plot2(inputList[[3]], main="H_RNA")
+    image.plot2(inputList[[4]], main="X_GAM")
+    image.plot2(inputList[[5]], main="X_Epi")
+    image.plot2(inputList[[6]], main="H_Epi")
+    image.plot2(inputList[[7]], main="T")
+}
+
+.multiImagePlots2_List <- function(inputList){
+    l <- length(inputList[[7]])
+    m <- ceiling((6+l)/2)
+    layout(rbind(1:m, (m+1):(2*m)))
+    image.plot2(inputList[[1]], main="X_RNA")
+    image.plot2(inputList[[2]], main="W_RNA")
+    image.plot2(inputList[[3]], main="H_RNA")
+    image.plot2(inputList[[4]], main="X_GAM")
+    image.plot2(inputList[[5]], main="X_Epi")
+    image.plot2(inputList[[6]], main="H_Epi")
+    lapply(seq(l), function(x){
+        image.plot2(inputList[[7]][[x]], main="T")
+    })
 }
 
 image.plot2 <- function(A, ...){
@@ -92,38 +112,46 @@ image.plot2 <- function(A, ...){
     d_Beta
 }
 
-.recErrors <- function(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Epi, Beta){
+.recErrors <- function(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Epi, Beta, Pi_RNA, Pi_Epi){
     if(is.matrix(X_RNA) && is.matrix(X_Epi)){
-        d_Beta <- .recErrors_Matrix(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Epi, Beta)
+        d_Beta <- .recErrors_Matrix(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Epi, Beta, Pi_RNA, Pi_Epi)
     }else{
-        d_Beta <- .recErrors_List(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Epi, Beta)
+        d_Beta <- .recErrors_List(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Epi, Beta, Pi_RNA, Pi_Epi)
     }
     d_Beta
 }
 
-.recErrors_Matrix <- function(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Epi, Beta){
-    left <- .BetaDivergence(X_RNA, W_RNA%*%H_RNA, Beta)
-    right <- .BetaDivergence(X_Epi, T%*%W_RNA%*%H_Epi, Beta)
+.recErrors_Matrix <- function(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Epi, Beta, Pi_RNA, Pi_Epi){
+    left <- Pi_RNA * .BetaDivergence(X_RNA, W_RNA%*%H_RNA, Beta)
+    right <- Pi_Epi * .BetaDivergence(X_Epi, T%*%W_RNA%*%H_Epi, Beta)
     left + right
 }
 
-.recErrors_List <- function(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Epi, Beta){
+.recErrors_List <- function(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Epi, Beta, Pi_RNA, Pi_Epi){
     lefts <- sum(unlist(lapply(seq_along(X_RNA), function(x){
-        .BetaDivergence(X_RNA[[x]], W_RNA[[x]]%*%H_RNA, Beta)})))
+        Pi_RNA[[x]] * .BetaDivergence(X_RNA[[x]], W_RNA[[x]]%*%H_RNA, Beta)})))
     rights <- sum(unlist(lapply(seq_along(X_Epi), function(x){
-        .BetaDivergence(X_Epi[[x]], T[[x]]%*%W_RNA[[x]]%*%H_Epi, Beta)})))
+        Pi_Epi[[x]] * .BetaDivergence(X_Epi[[x]], T[[x]]%*%W_RNA[[x]]%*%H_Epi, Beta)})))
     lefts + rights
 }
 
-.rho <- function(Beta){
-    if(Beta < 1){
-        rho_beta <- 1 / (2 - Beta)
+.rho <- function(Beta, root){
+    if(root){
+        out <- 0.5
+    }else{
+        if(Beta < 1){
+            out <- 1 / (2 - Beta)
+        }
+        if((1 <= Beta) && (Beta <= 2)){
+            out <- 1
+        }
+        if(Beta > 2){
+            out <- 1 / (Beta - 1)
+        }
     }
-    if((1 <= Beta) && (Beta <= 2)){
-        rho_beta <- 1
-    }
-    if(Beta > 2){
-        rho_beta <- 1 / (Beta - 1)
-    }
-    rho_beta
+    out
+}
+
+.weight <- function(X){
+    1 / sum(X^2)
 }

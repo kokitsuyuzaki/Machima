@@ -1,36 +1,37 @@
 .updateH_RNA <- function(X_RNA, W_RNA, H_RNA,
-            Beta, L1_H_RNA, L2_H_RNA, orthH_RNA){
+            Beta, L1_H_RNA, L2_H_RNA, orthH_RNA, root, Pi_RNA, Pi_Epi){
     if(is.matrix(X_RNA)){
         H_RNA <- .updateH_RNA_Matrix(X_RNA, W_RNA, H_RNA,
-            Beta, L1_H_RNA, L2_H_RNA, orthH_RNA)
+            Beta, L1_H_RNA, L2_H_RNA, orthH_RNA, root, Pi_RNA, Pi_Epi)
     }else{
         H_RNA <- .updateH_RNA_List(X_RNA, W_RNA, H_RNA,
-            Beta, L1_H_RNA, L2_H_RNA, orthH_RNA)
+            Beta, L1_H_RNA, L2_H_RNA, orthH_RNA, root, Pi_RNA, Pi_Epi)
     }
     H_RNA
 }
 
-.updateH_RNA_Matrix <- function(X_RNA, W_RNA, H_RNA, Beta, L1_H_RNA, L2_H_RNA, orthH_RNA){
+.updateH_RNA_Matrix <- function(X_RNA, W_RNA, H_RNA, Beta, L1_H_RNA, L2_H_RNA, orthH_RNA, root, Pi_RNA, Pi_Epi){
     WH <- W_RNA %*% H_RNA
-    numer1 <- t(t(WH^(Beta - 2) * X_RNA) %*% W_RNA)
+    numer <- t(t(WH^(Beta - 2) * X_RNA) %*% W_RNA)
     if(orthH_RNA){
-        denom1 <- t(X_RNA %*% W_RNA %*% H_RNA %*% t(H_RNA)) + L1_H_RNA + L2_H_RNA * H_RNA
+        denom <- t(X_RNA %*% W_RNA %*% H_RNA %*% t(H_RNA)) + L1_H_RNA + L2_H_RNA * H_RNA
     }else{
-        denom1 <- t(t(WH^(Beta - 1)) %*% W_RNA) + L1_H_RNA + L2_H_RNA * H_RNA
+        denom <- t(t(WH^(Beta - 1)) %*% W_RNA) + L1_H_RNA + L2_H_RNA * H_RNA
     }
-    H_RNA * (numer1 / denom1)^.rho(Beta)
+    H_RNA * (numer / denom)^.rho(Beta, root)
 }
 
-.updateH_RNA_List <- function(X_RNA, W_RNA, H_RNA, Beta, L1_H_RNA, L2_H_RNA, orthH_RNA){
-    tmp <- lapply(seq_along(X_RNA), function(x){
-        WH <- W_RNA[[x]] %*% H_RNA
-        numer1 <- t(t(WH^(Beta - 2) * X_RNA[[x]]) %*% W_RNA[[x]])
-        if(orthH_RNA){
-            denom1 <- t(X_RNA[[x]] %*% W_RNA[[x]] %*% H_RNA %*% t(H_RNA)) + L1_H_RNA + L2_H_RNA * H_RNA
-        }else{
-            denom1 <- t(t(WH^(Beta - 1)) %*% W_RNA[[x]]) + L1_H_RNA + L2_H_RNA * H_RNA
-        }
-        (numer1 / denom1)^.rho(Beta)
+.updateH_RNA_List <- function(X_RNA, W_RNA, H_RNA, Beta, L1_H_RNA, L2_H_RNA, orthH_RNA, root, Pi_RNA, Pi_Epi){
+    numer <- lapply(seq_along(X_RNA), function(x){
+        Pi_RNA * (t(t((W_RNA[[x]] %*% H_RNA)^(Beta - 2) * X_RNA[[x]]) %*% W_RNA[[x]]))
     })
-    H_RNA * Reduce('+', tmp)
+    denom <- lapply(seq_along(X_RNA), function(x){
+        if(orthH_RNA){
+            out <- Pi_RNA * (t(X_RNA[[x]] %*% W_RNA[[x]] %*% H_RNA %*% t(H_RNA)) + L1_H_RNA + L2_H_RNA * H_RNA)
+        }else{
+            out <- Pi_RNA * (t(t((W_RNA[[x]] %*% H_RNA)^(Beta - 1)) %*% W_RNA[[x]]) + L1_H_RNA + L2_H_RNA * H_RNA)
+        }
+        out
+    })
+    H_RNA * (numer / denom)^.rho(Beta, root)
 }
