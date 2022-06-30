@@ -31,9 +31,9 @@
             WH <- W_RNA[[x]] %*% H_RNA
             numer1 <- Pi_RNA[[x]] * ((WH^(Beta - 2) * X_RNA[[x]]) %*% t(H_RNA))
             if(orthW_RNA){
-                denom1 <- Pi_RNA * (W_RNA[[x]] %*% t(W_RNA[[x]]) %*% X_RNA[[x]] %*% t(H_RNA) + L2_W_RNA + L2_W_RNA * W_RNA[[x]])
+                denom1 <- Pi_RNA[[x]] * (W_RNA[[x]] %*% t(W_RNA[[x]]) %*% X_RNA[[x]] %*% t(H_RNA) + L2_W_RNA + L2_W_RNA * W_RNA[[x]])
             }else{
-                denom1 <- Pi_RNA * (WH^(Beta - 1) %*% t(H_RNA) + L2_W_RNA + L2_W_RNA * W_RNA[[x]])
+                denom1 <- Pi_RNA[[x]] * (WH^(Beta - 1) %*% t(H_RNA) + L2_W_RNA + L2_W_RNA * W_RNA[[x]])
             }
             TWH <- T[[x]] %*% W_RNA[[x]] %*% H_Epi
             numer2 <- Pi_Epi[[x]] * (t(T[[x]]) %*% (TWH^(Beta - 2) * X_Epi[[x]]) %*% t(H_Epi))

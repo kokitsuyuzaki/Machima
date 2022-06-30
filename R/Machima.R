@@ -5,32 +5,32 @@
 #' <https://github.com/kokitsuyuzaki/Machima>.
 #' @param X_RNA Single-cell RNA-Seq matrix (n x m)
 #' @param X_Epi Bulk Epigenome feature matrix (l x o)
-#' @param T Coefficient matrix to connect the dimension of X_RNA and X_Epi (l x n)
-#' @param fixW_RNA Fix value option of W_RNA (for Transfer Learning)
-#' @param fixH_RNA Fix value option of H_RNA (for Transfer Learning)
-#' @param fixT Fix value option of T (for Transfer Learning)
-#' @param orthW_RNA Orthogonal option of W_RNA (for uniqueness)
-#' @param orthH_RNA Orthogonal option of H_RNA (for uniqueness)
-#' @param orthT Orthogonal option of T (for uniqueness)
-#' @param orthH_Epi Orthogonal option of H_Epi (for uniqueness)
-#' @param pseudocount Pseudo count
-#' @param L1_W_RNA Parameter for L1-norm regularization of W_RNA
-#' @param L2_W_RNA Parameter for L2-norm regularization of W_RNA
-#' @param L1_H_RNA Parameter for L1-norm regularization of H_RNA
-#' @param L2_H_RNA Parameter for L2-norm regularization of H_RNA
-#' @param L1_T Parameter for L1-norm regularization of T
-#' @param L2_T Parameter for L2-norm regularization of T
-#' @param L1_H_Epi Parameter for L1-norm regularization of H_Epi
-#' @param L2_H_Epi Parameter for L2-norm regularization of H_Epi
-#' @param J Rank parameter to decompose
-#' @param Beta Parameter of Beta-divergence
+#' @param T Coefficient matrix to connect the dimension of X_RNA and X_Epi (l x n, Default: NULL)
+#' @param fixW_RNA Fix value option of W_RNA (for Transfer Learning, Default: FALSE)
+#' @param fixH_RNA Fix value option of H_RNA (for Transfer Learning, Default: FALSE)
+#' @param fixT Fix value option of T (for Transfer Learning, Default: FALSE)
+#' @param orthW_RNA Orthogonal option of W_RNA (for uniqueness, Default: FALSE)
+#' @param orthH_RNA Orthogonal option of H_RNA (for uniqueness, Default: FALSE)
+#' @param orthT Orthogonal option of T (for uniqueness, Default: FALSE)
+#' @param orthH_Epi Orthogonal option of H_Epi (for uniqueness, Default: FALSE)
+#' @param pseudocount Pseudo count (Default: 1e-10)
+#' @param L1_W_RNA Parameter for L1-norm regularization of W_RNA (Default: 1e-10)
+#' @param L2_W_RNA Parameter for L2-norm regularization of W_RNA (Default: 1e-10)
+#' @param L1_H_RNA Parameter for L1-norm regularization of H_RNA (Default: 1e-10)
+#' @param L2_H_RNA Parameter for L2-norm regularization of H_RNA (Default: 1e-10)
+#' @param L1_T Parameter for L1-norm regularization of T (Default: 1e-10)
+#' @param L2_T Parameter for L2-norm regularization of T (Default: 1e-10)
+#' @param L1_H_Epi Parameter for L1-norm regularization of H_Epi (Default: 1e-10)
+#' @param L2_H_Epi Parameter for L2-norm regularization of H_Epi (Default: 1e-10)
+#' @param J Rank parameter to decompose (Default: 3)
+#' @param Beta Parameter of Beta-divergence (Default: 2)
 #' @param root Option to add sqrt to the update equation (Default: FALSE)
-#' @param thr The threshold to stop the iteration
+#' @param thr The threshold to stop the iteration (Default: 1e-10)
 #' @param viz Whether the temporal result is visualized (Default: FALSE)
-#' @param figdir The figure directory
-#' @param init Initial value algorithm
-#' @param num.iter The number of iteration
-#' @param verbose Verbose option
+#' @param figdir The figure directory (Default: NULL)
+#' @param init Initial value algorithm (Default: "NMF")
+#' @param num.iter The number of iteration (Default: 30)
+#' @param verbose Verbose option (Default: FALSE)
 #' @return A list containing the Joint-nonnegative Trifactorization
 #' @examples
 #' X_RNA <- matrix(runif(20*30), nrow=20, ncol=30)
@@ -43,7 +43,7 @@
 #' @importFrom stats runif
 #' @export
 Machima <- function(X_RNA, X_Epi, T=NULL,
-    fixW_RNA=TRUE, fixH_RNA=TRUE, fixT=FALSE,
+    fixW_RNA=FALSE, fixH_RNA=FALSE, fixT=FALSE,
     orthW_RNA=FALSE, orthH_RNA=FALSE, orthT=FALSE, orthH_Epi=FALSE,
     pseudocount=1e-10,
     L1_W_RNA=1e-10, L2_W_RNA=1e-10,

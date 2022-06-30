@@ -12,8 +12,8 @@ Machima(
   X_RNA,
   X_Epi,
   T = NULL,
-  fixW_RNA = TRUE,
-  fixH_RNA = TRUE,
+  fixW_RNA = FALSE,
+  fixH_RNA = FALSE,
   fixT = FALSE,
   orthW_RNA = FALSE,
   orthH_RNA = FALSE,
@@ -44,57 +44,57 @@ Machima(
 
 \item{X_Epi}{Bulk Epigenome feature matrix (l x o)}
 
-\item{T}{Coefficient matrix to connect the dimension of X_RNA and X_Epi (l x n)}
+\item{T}{Coefficient matrix to connect the dimension of X_RNA and X_Epi (l x n, Default: NULL)}
 
-\item{fixW_RNA}{Fix value option of W_RNA (for Transfer Learning)}
+\item{fixW_RNA}{Fix value option of W_RNA (for Transfer Learning, Default: FALSE)}
 
-\item{fixH_RNA}{Fix value option of H_RNA (for Transfer Learning)}
+\item{fixH_RNA}{Fix value option of H_RNA (for Transfer Learning, Default: FALSE)}
 
-\item{fixT}{Fix value option of T (for Transfer Learning)}
+\item{fixT}{Fix value option of T (for Transfer Learning, Default: FALSE)}
 
-\item{orthW_RNA}{Orthogonal option of W_RNA (for uniqueness)}
+\item{orthW_RNA}{Orthogonal option of W_RNA (for uniqueness, Default: FALSE)}
 
-\item{orthH_RNA}{Orthogonal option of H_RNA (for uniqueness)}
+\item{orthH_RNA}{Orthogonal option of H_RNA (for uniqueness, Default: FALSE)}
 
-\item{orthT}{Orthogonal option of T (for uniqueness)}
+\item{orthT}{Orthogonal option of T (for uniqueness, Default: FALSE)}
 
-\item{orthH_Epi}{Orthogonal option of H_Epi (for uniqueness)}
+\item{orthH_Epi}{Orthogonal option of H_Epi (for uniqueness, Default: FALSE)}
 
-\item{pseudocount}{Pseudo count}
+\item{pseudocount}{Pseudo count (Default: 1e-10)}
 
-\item{L1_W_RNA}{Parameter for L1-norm regularization of W_RNA}
+\item{L1_W_RNA}{Parameter for L1-norm regularization of W_RNA (Default: 1e-10)}
 
-\item{L2_W_RNA}{Parameter for L2-norm regularization of W_RNA}
+\item{L2_W_RNA}{Parameter for L2-norm regularization of W_RNA (Default: 1e-10)}
 
-\item{L1_H_RNA}{Parameter for L1-norm regularization of H_RNA}
+\item{L1_H_RNA}{Parameter for L1-norm regularization of H_RNA (Default: 1e-10)}
 
-\item{L2_H_RNA}{Parameter for L2-norm regularization of H_RNA}
+\item{L2_H_RNA}{Parameter for L2-norm regularization of H_RNA (Default: 1e-10)}
 
-\item{L1_T}{Parameter for L1-norm regularization of T}
+\item{L1_T}{Parameter for L1-norm regularization of T (Default: 1e-10)}
 
-\item{L2_T}{Parameter for L2-norm regularization of T}
+\item{L2_T}{Parameter for L2-norm regularization of T (Default: 1e-10)}
 
-\item{L1_H_Epi}{Parameter for L1-norm regularization of H_Epi}
+\item{L1_H_Epi}{Parameter for L1-norm regularization of H_Epi (Default: 1e-10)}
 
-\item{L2_H_Epi}{Parameter for L2-norm regularization of H_Epi}
+\item{L2_H_Epi}{Parameter for L2-norm regularization of H_Epi (Default: 1e-10)}
 
-\item{J}{Rank parameter to decompose}
+\item{J}{Rank parameter to decompose (Default: 3)}
 
-\item{Beta}{Parameter of Beta-divergence}
+\item{Beta}{Parameter of Beta-divergence (Default: 2)}
 
 \item{root}{Option to add sqrt to the update equation (Default: FALSE)}
 
-\item{thr}{The threshold to stop the iteration}
+\item{thr}{The threshold to stop the iteration (Default: 1e-10)}
 
 \item{viz}{Whether the temporal result is visualized (Default: FALSE)}
 
-\item{figdir}{The figure directory}
+\item{figdir}{The figure directory (Default: NULL)}
 
-\item{init}{Initial value algorithm}
+\item{init}{Initial value algorithm (Default: "NMF")}
 
-\item{num.iter}{The number of iteration}
+\item{num.iter}{The number of iteration (Default: 30)}
 
-\item{verbose}{Verbose option}
+\item{verbose}{Verbose option (Default: FALSE)}
 }
 \value{
 A list containing the Joint-nonnegative Trifactorization
