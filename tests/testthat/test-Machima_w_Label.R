@@ -1,10 +1,11 @@
 #
-# Single Matrix mode
+# Single Matrix mode with Label
 #
 X_RNA <- matrix(runif(20*30), nrow=20, ncol=30)
 X_Epi <- matrix(runif(15*25), nrow=15, ncol=25)
+label <- c(rep("A", 10), rep("B", 10), rep("C", 10))
 
-out1 <- Machima(X_RNA, X_Epi)
+out1 <- Machima(X_RNA, X_Epi, label=label)
 
 expect_true(is.list(out1))
 expect_equal(dim(out1$W_RNA), c(20, 3))
@@ -14,11 +15,11 @@ expect_equal(dim(out1$X_GAM), c(20, 25))
 expect_equal(dim(out1$T), c(15, 20))
 
 #
-# Single Matrix mode with T
+# Single Matrix mode with T and Label
 #
 T <- matrix(runif(15*20), nrow=15, ncol=20)
 
-out2 <- Machima(X_RNA, X_Epi, T=T)
+out2 <- Machima(X_RNA, X_Epi, label=label, T=T)
 
 expect_true(is.list(out2))
 expect_equal(dim(out2$W_RNA), c(20, 3))
@@ -29,7 +30,7 @@ expect_equal(dim(out2$T), c(15, 20))
 
 
 #
-# Multiple Matrices mode
+# Multiple Matrices mode with Label
 #
 X_RNAs <- list(
     X_RNA_1 = matrix(runif(20*30), nrow=20, ncol=30),
@@ -45,7 +46,7 @@ X_Epis <- list(
     X_Epi_4 = matrix(runif(30*25), nrow=30, ncol=25),
     X_Epi_5 = matrix(runif(40*25), nrow=40, ncol=25))
 
-out3 <- Machima(X_RNAs, X_Epis, T=NULL)
+out3 <- Machima(X_RNAs, X_Epis, label=label, T=NULL)
 
 expect_true(is.list(out3))
 expect_true(is.list(out3$W_RNA))
@@ -65,7 +66,7 @@ expect_equal(dim(out3$T[[4]]), c(30, 35))
 expect_equal(dim(out3$T[[5]]), c(40, 40))
 
 #
-# Multiple Matrices mode with Ts
+# Multiple Matrices mode with Ts and Label
 #
 Ts <- list(
 	T_1 = matrix(runif(25*20), nrow=25, ncol=20),
@@ -74,7 +75,7 @@ Ts <- list(
 	T_4 = matrix(runif(30*35), nrow=30, ncol=35),
 	T_5 = matrix(runif(40*40), nrow=40, ncol=40))
 
-out4 <- Machima(X_RNAs, X_Epis, T=Ts)
+out4 <- Machima(X_RNAs, X_Epis, label=label, T=Ts)
 
 expect_true(is.list(out4))
 expect_true(is.list(out4$W_RNA))

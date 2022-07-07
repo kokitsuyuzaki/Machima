@@ -11,6 +11,7 @@ For the details of the method, see the reference section of GitHub README.md
 Machima(
   X_RNA,
   X_Epi,
+  label = NULL,
   T = NULL,
   fixW_RNA = FALSE,
   fixH_RNA = FALSE,
@@ -43,6 +44,8 @@ Machima(
 \item{X_RNA}{Single-cell RNA-Seq matrix (n x m)}
 
 \item{X_Epi}{Bulk Epigenome feature matrix (l x o)}
+
+\item{label}{A length-m character vector to specify the cell type within X_RNA (Default: NULL)}
 
 \item{T}{Coefficient matrix to connect the dimension of X_RNA and X_Epi (l x n, Default: NULL)}
 

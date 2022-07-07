@@ -1,4 +1,4 @@
-.checkMachima <- function(X_RNA, X_Epi, T,
+.checkMachima <- function(X_RNA, X_Epi, label, T,
     fixW_RNA, fixH_RNA, fixT,
     orthW_RNA, orthH_RNA, orthT, orthH_Epi,
     pseudocount,
@@ -44,6 +44,12 @@
     }
     if(check2 && check4){
         stopifnot(length(X_RNA) == length(X_Epi))
+    }
+    # Check label
+    if(!is.null(label)){
+        stopifnot(is.vector(label))
+        stopifnot(is.character(label))
+        stopifnot(length(label) == ncol(X_RNA))
     }
     # Check T
     check5 <- is.matrix(T)

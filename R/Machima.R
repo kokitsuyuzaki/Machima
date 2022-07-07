@@ -5,6 +5,7 @@
 #' <https://github.com/kokitsuyuzaki/Machima>.
 #' @param X_RNA Single-cell RNA-Seq matrix (n x m)
 #' @param X_Epi Bulk Epigenome feature matrix (l x o)
+#' @param label A length-m character vector to specify the cell type within X_RNA (Default: NULL)
 #' @param T Coefficient matrix to connect the dimension of X_RNA and X_Epi (l x n, Default: NULL)
 #' @param fixW_RNA Fix value option of W_RNA (for Transfer Learning, Default: FALSE)
 #' @param fixH_RNA Fix value option of H_RNA (for Transfer Learning, Default: FALSE)
@@ -40,9 +41,10 @@
 #' @importFrom fields image.plot
 #' @importFrom graphics layout
 #' @importFrom grDevices dev.off png
-#' @importFrom stats runif
+#' @importFrom stats runif cor
+#' @importFrom igraph graph_from_incidence_matrix max_bipartite_match
 #' @export
-Machima <- function(X_RNA, X_Epi, T=NULL,
+Machima <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     fixW_RNA=FALSE, fixH_RNA=FALSE, fixT=FALSE,
     orthW_RNA=FALSE, orthH_RNA=FALSE, orthT=FALSE, orthH_Epi=FALSE,
     pseudocount=1e-10,
@@ -55,7 +57,7 @@ Machima <- function(X_RNA, X_Epi, T=NULL,
     num.iter=30, verbose=FALSE){
     # Argument Check
     init <- match.arg(init)
-    .checkMachima(X_RNA, X_Epi, T,
+    .checkMachima(X_RNA, X_Epi, label, T,
         fixW_RNA, fixH_RNA, fixT,
         orthW_RNA, orthH_RNA, orthT, orthH_Epi,
         pseudocount,
@@ -122,6 +124,13 @@ Machima <- function(X_RNA, X_Epi, T=NULL,
         if(viz && is.null(figdir)){
             .multiImagePlots3(X_RNA, W_RNA, H_RNA, X_GAM, X_Epi, H_Epi, T)
         }
+    }
+    # Label Transfer
+    if(!is.null(label)){
+        asn <- .assignCelltypeNames(X_RNA, X_Epi, label, W_RNA, H_RNA, H_Epi)
+        W_RNA <- asn$W_RNA
+        H_RNA <- asn$H_RNA
+        H_Epi <- asn$H_Epi
     }
     # Output
     list(W_RNA=W_RNA, H_RNA=H_RNA, H_Epi=H_Epi, X_GAM=X_GAM,
