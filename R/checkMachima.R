@@ -20,6 +20,9 @@
         lapply(X_RNA, function(x){
             stopifnot(!all(x == 0))
         })
+        nc1 <- ncol(X_RNA[[1]])
+        ncs <- unlist(lapply(X_RNA, ncol))
+        all(ncs == nc1)
     }
     # Check X_Epi
     check3 <- is.matrix(X_Epi)
@@ -36,6 +39,9 @@
         lapply(X_Epi, function(x){
             stopifnot(!all(x == 0))
         })
+        nc1 <- ncol(X_Epi[[1]])
+        ncs <- unlist(lapply(X_Epi, ncol))
+        all(ncs == nc1)
     }
     # Check X_RNA and X_Epi
     if((check2 && !check4) || (!check2 && check4)){
@@ -49,7 +55,11 @@
     if(!is.null(label)){
         stopifnot(is.vector(label))
         stopifnot(is.character(label))
-        stopifnot(length(label) == ncol(X_RNA))
+        if(check2 && check4){
+            stopifnot(length(label) == ncol(X_RNA[[1]]))
+        }else{
+            stopifnot(length(label) == ncol(X_RNA))
+        }
     }
     # Check T
     check5 <- is.matrix(T)
