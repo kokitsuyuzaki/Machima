@@ -14,7 +14,12 @@
     # Average vectors
     AvgX_RNA <- do.call("cbind",
         lapply(uniq.celltypes, function(x){
-            rowMeans(X_RNA[, which(label == x)])}))
+            target <- which(label == x)
+            if(length(target) >= 2){
+                rowMeans(X_RNA[, target])
+            }else{
+                X_RNA[, target]
+            }}))
     # Matching by Correlation Coefficient
     cor.matrix <- cor(AvgX_RNA, W_RNA)
     cor.matrix[which(is.na(cor.matrix))] <- 0
