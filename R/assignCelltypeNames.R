@@ -25,8 +25,23 @@
     cor.matrix[which(is.na(cor.matrix))] <- 0
     rownames(cor.matrix) <- uniq.celltypes
     colnames(cor.matrix) <- components
-    g <- graph_from_incidence_matrix(cor.matrix, weighted=TRUE)
-    estimated.celltypes <- as.vector(max_bipartite_match(g)$matching[components])
+
+    if(length(uniq.celltypes) > length(components)){
+        related.component <- apply(cor.matrix, 1, function(x){
+            which(x == max(x))[1]
+        })
+        estimated.celltypes <- unlist(lapply(seq_along(components), function(x){
+            target <- which(related.component == x)
+            if(length(target) != 0){
+                paste0(names(related.component)[target], collapse="|")
+            }else{
+                NA
+            }
+        }))
+    }else{
+        g <- graph_from_incidence_matrix(cor.matrix, weighted=TRUE)
+        estimated.celltypes <- as.vector(max_bipartite_match(g)$matching[components])
+    }
     # Assign
     colnames(W_RNA) <- estimated.celltypes
     rownames(H_RNA) <- estimated.celltypes
