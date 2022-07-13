@@ -62,39 +62,65 @@
 
 .multiImagePlots3 <- function(X_RNA, W_RNA, H_RNA, X_GAM, X_Epi, H_Epi, T){
     if(is.matrix(X_RNA) && is.matrix(X_Epi)){
-        .multiImagePlots2_Matrix(list(X_RNA, W_RNA, H_RNA, X_GAM, X_Epi, H_Epi, T))
+        recX_RNA <- W_RNA %*% H_RNA
+        recX_Epi <- T %*% W_RNA %*% H_Epi
+        .multiImagePlots2_Matrix(list(
+            X_RNA, recX_RNA, W_RNA, H_RNA, X_GAM,
+            X_Epi, recX_Epi, H_Epi, T))
     }else{
         X_RNA2 <- do.call("rbind", X_RNA)
         W_RNA2 <- do.call("rbind", W_RNA)
+        recX_RNA2 <- W_RNA2 %*% H_RNA
         X_Epi2 <- do.call("rbind", X_Epi)
-        .multiImagePlots2_List(list(X_RNA2, W_RNA2, H_RNA, X_GAM, X_Epi2, H_Epi, T))
+        recX_Epi2 <- do.call("rbind",
+            lapply(seq_along(T), function(x){
+            T[[x]] %*% W_RNA[[x]] %*% H_Epi
+        }))
+        .multiImagePlots2_List(list(X_RNA2, recX_RNA2, W_RNA2, H_RNA, X_GAM,
+            X_Epi2, recX_Epi2, H_Epi, T))
     }
 }
 
 .multiImagePlots2_Matrix <- function(inputList){
-    layout(rbind(1:4, 5:8))
+    layout(rbind(1:5, 6:10))
     image.plot2(inputList[[1]], main="X_RNA")
-    image.plot2(inputList[[2]], main="W_RNA")
-    image.plot2(inputList[[3]], main="H_RNA")
-    image.plot2(inputList[[4]], main="X_GAM")
-    image.plot2(inputList[[5]], main="X_Epi")
-    image.plot2(inputList[[6]], main="H_Epi")
-    image.plot2(inputList[[7]], main="T")
+    image.plot2(inputList[[2]], main="rec X_RNA")
+    image.plot2(inputList[[3]], main="W_RNA")
+    image.plot2(inputList[[4]], main="H_RNA")
+    image.plot2(inputList[[5]], main="X_GAM")
+
+    image.plot2(inputList[[6]], main="X_Epi")
+    image.plot2(inputList[[7]], main="rec X_Epi")
+    image.plot2(inputList[[8]], main="H_Epi")
+    image.plot2(inputList[[9]], main="T")
 }
 
 .multiImagePlots2_List <- function(inputList){
-    l <- length(inputList[[7]])
-    m <- ceiling((6+l)/2)
-    layout(rbind(1:m, (m+1):(2*m)))
+    l <- length(inputList[[9]])
+    m <- length(6:(8+l))
+    mylayout <- matrix(0, nrow=2, ncol=m)
+    mylayout[1, seq(5)] <- seq(5)
+    mylayout[2, ] <- 6:(8+l)
+    zeros <- length(which(mylayout == 0))
+    layout(mylayout)
     image.plot2(inputList[[1]], main="X_RNA")
-    image.plot2(inputList[[2]], main="W_RNA")
-    image.plot2(inputList[[3]], main="H_RNA")
-    image.plot2(inputList[[4]], main="X_GAM")
-    image.plot2(inputList[[5]], main="X_Epi")
-    image.plot2(inputList[[6]], main="H_Epi")
+    image.plot2(inputList[[2]], main="rec X_RNA")
+    image.plot2(inputList[[3]], main="W_RNA")
+    image.plot2(inputList[[4]], main="H_RNA")
+    image.plot2(inputList[[5]], main="X_GAM")
+    .null.plot(zeros)
+    image.plot2(inputList[[6]], main="X_Epi")
+    image.plot2(inputList[[7]], main="rec X_Epi")
+    image.plot2(inputList[[8]], main="H_Epi")
     lapply(seq(l), function(x){
-        image.plot2(inputList[[7]][[x]], main="T")
+        image.plot2(inputList[[9]][[x]], main=paste0("T_", x))
     })
+}
+
+.null.plot <- function(l){
+    for(i in seq(l)){
+        plot.new()
+    }
 }
 
 image.plot2 <- function(A, ...){

@@ -31,7 +31,7 @@ X_Epi <- T %*% X_GAM
 #
 # Single Matrix mode
 #
-out1 <- Machima(X_RNA, X_Epi, Beta=2, viz=TRUE, root=TRUE)
+out1 <- Machima(X_RNA, X_Epi, Beta=2, viz=TRUE)
 
 #
 # Single Matrix mode with T

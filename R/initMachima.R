@@ -20,11 +20,13 @@
         H_Epi <- .normalizeRows(
             matrix(runif(J*ncol(X_Epi)),
             nrow=J, ncol=ncol(X_Epi)))$A
-        # Random T
         if(!fixT){
             nr <- nrow(X_Epi)
             nc <- nrow(X_RNA)
             T <- matrix(runif(nr*nc), nrow=nr, ncol=nc)
+            # # NMF with X_Epi
+            # WH <- W_RNA %*% H_Epi
+            # T <- .returnBestNMFwithV(X=X_Epi, initV=t(WH), J=nrow(X_RNA))$U
         }
     }
     if(init == "RandomRNA"){
@@ -70,11 +72,48 @@
         # NMF with Epigenome
         out1_3 <- .reArrangeOuts(.returnBestNMF(X_Epi, J=J), X_Epi)
         out1_4 <- .normalizeCols(out1_3$V)
-        W_Epi <- t(t(out1_3$U) * out1_4$normA)
+        TW_Epi <- t(t(out1_3$U) * out1_4$normA)
         H_Epi <- t(out1_4$A)
+        # NMF with TW_Epi
+        if(!fixT){
+            T <- .returnBestNMFwithV(X=TW_Epi, initV=t(W_RNA), J=nrow(X_RNA))$U
+        }
+    }
+    if(init == "NMFAlign2"){
+        # NMF with RNA
+        out1_1 <- .reArrangeOuts(.returnBestNMF(X_RNA, J=J), X_RNA)
+        out1_2 <- .normalizeCols(out1_1$V)
+        W_RNA <- t(t(out1_1$U) * out1_2$normA)
+        H_RNA <- t(out1_2$A)
+        # NMF with Epigenome
+        out2_1 <- .returnBestNMF(X_Epi, J=J)
+        out2_2 <- .normalizeCols(out2_1$V)
+        TW_Epi <- t(t(out2_1$U) * out2_2$normA)
+        H_Epi <- t(out2_2$A)
+        # NMF with TW_Epi
+        out2_3 <- .returnBestNMF(TW_Epi, J=nrow(X_RNA))
+        out2_4 <- .normalizeCols(out2_3$U)
+        W_Epi <- t(out2_3$V * out2_4$normA)
+        # Matching by Correlation Coefficient
+        cor.matrix <- cor(W_RNA, W_Epi)
+        cor.matrix[which(is.na(cor.matrix))] <- 0
+        rownames(cor.matrix) <- paste0("W_RNA", seq(J))
+        colnames(cor.matrix) <- paste0("W_Epi", seq(J))
+        # Alignment
+        g <- graph_from_incidence_matrix(cor.matrix, weighted=TRUE)
+        W_Epi_idx <- as.vector(max_bipartite_match(g)$matching[paste0("W_RNA", seq(J))])
+        W_Epi_idx[which(is.na(W_Epi_idx))] <- setdiff(
+            paste0("W_Epi", seq(J)),
+            W_Epi_idx[which(!is.na(W_Epi_idx))])
+        idx <- unlist(lapply(W_Epi_idx, function(x){
+            which(colnames(cor.matrix) == x)
+        }))
+        W_Epi <- W_Epi[, idx]
+        H_Epi <- H_Epi[idx, ]
+        WH_Epi <- t(W_Epi %*% H_Epi)
         # NMF with W_Epi
         if(!fixT){
-            T <- .returnBestNMFwithV(X=W_Epi, initV=t(W_RNA), J=nrow(X_RNA))$U
+            T <- .returnBestNMFwithV(X=X_Epi, initV=WH_Epi, J=nrow(X_RNA))$U
         }
     }
     # Weight

@@ -53,7 +53,7 @@ Machima <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     L1_T=1e-10, L2_T=1e-10,
     L1_H_Epi=1e-10, L2_H_Epi=1e-10,
     J=3, Beta=2, root=FALSE, thr=1e-10, viz=FALSE, figdir=NULL,
-    init = c("RandomEpi", "RandomRNA", "Random", "NMFAlign"),
+    init = c("RandomEpi", "RandomRNA", "Random", "NMFAlign", "NMFAlign2"),
     num.iter=30, verbose=FALSE){
     # Argument Check
     init <- match.arg(init)
