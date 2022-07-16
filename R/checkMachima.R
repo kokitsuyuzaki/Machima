@@ -3,7 +3,7 @@
     orthW_RNA, orthH_RNA, orthT, orthH_Epi,
     pseudocount,
     L1_W_RNA, L2_W_RNA, L1_H_RNA, L2_H_RNA,
-    L1_T, L2_T, L1_H_Epi, L2_H_Epi,
+    L1_T, L2_T, L1_H_Epi, L2_H_Epi, orderReg,
     J, Beta, root, thr, viz, figdir, num.iter, verbose){
     # Check X_RNA
     check1 <- is.matrix(X_RNA)
@@ -103,6 +103,7 @@
     stopifnot(L2_T >= 0)
     stopifnot(L1_H_Epi >= 0)
     stopifnot(L2_H_Epi >= 0)
+    stopifnot(is.logical(orderReg))
     # Check J
     if(check1 && check3){
         stopifnot(J <= min(dim(X_RNA), dim(X_Epi)))

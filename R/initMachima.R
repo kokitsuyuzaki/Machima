@@ -48,14 +48,16 @@
     }
     if(init == "Random"){
         # Random W_RNA/H_RNA
-        W_RNA <- .normalizeCols(
-            matrix(runif(nrow(X_RNA)*J),
-            nrow=nrow(X_RNA), ncol=J))$A
+        # W_RNA <- .normalizeCols(
+        #     matrix(runif(nrow(X_RNA)*J),
+        #     nrow=nrow(X_RNA), ncol=J))$A
+        W_RNA <- matrix(runif(nrow(X_RNA)*J), nrow=nrow(X_RNA), ncol=J)
         H_RNA <- t(W_RNA) %*% X_RNA
         # Random H_Epi
-        H_Epi <- .normalizeRows(
-            matrix(runif(J*ncol(X_Epi)),
-            nrow=J, ncol=ncol(X_Epi)))$A
+        # H_Epi <- .normalizeRows(
+        #     matrix(runif(J*ncol(X_Epi)),
+        #     nrow=J, ncol=ncol(X_Epi)))$A
+        H_Epi <-  matrix(runif(J*ncol(X_Epi)), nrow=J, ncol=ncol(X_Epi))
         # Random T
         if(!fixT){
             nr <- nrow(X_Epi)

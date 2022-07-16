@@ -14,7 +14,7 @@
 #' @param orthH_RNA Orthogonal option of H_RNA (for uniqueness, Default: FALSE)
 #' @param orthT Orthogonal option of T (for uniqueness, Default: FALSE)
 #' @param orthH_Epi Orthogonal option of H_Epi (for uniqueness, Default: FALSE)
-#' @param pseudocount Pseudo count (Default: 1e-10)
+#' @param pseudocount Pseudo count to avoid zero division (Default: Machine Epsilon)
 #' @param L1_W_RNA Parameter for L1-norm regularization of W_RNA (Default: 1e-10)
 #' @param L2_W_RNA Parameter for L2-norm regularization of W_RNA (Default: 1e-10)
 #' @param L1_H_RNA Parameter for L1-norm regularization of H_RNA (Default: 1e-10)
@@ -23,6 +23,7 @@
 #' @param L2_T Parameter for L2-norm regularization of T (Default: 1e-10)
 #' @param L1_H_Epi Parameter for L1-norm regularization of H_Epi (Default: 1e-10)
 #' @param L2_H_Epi Parameter for L2-norm regularization of H_Epi (Default: 1e-10)
+#' @param orderReg Order regularization to sort the column vectors of W_RNA, H_RNA, and H_Epi by the L2 norm in ascending order (Default: FALSE)
 #' @param J Rank parameter to decompose (Default: 3)
 #' @param Beta Parameter of Beta-divergence (Default: 2)
 #' @param root Option to add sqrt to the update equation (Default: FALSE)
@@ -47,11 +48,12 @@
 Machima <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     fixW_RNA=FALSE, fixH_RNA=FALSE, fixT=FALSE,
     orthW_RNA=FALSE, orthH_RNA=FALSE, orthT=FALSE, orthH_Epi=FALSE,
-    pseudocount=1e-10,
+    pseudocount=.Machine$double.eps,
     L1_W_RNA=1e-10, L2_W_RNA=1e-10,
     L1_H_RNA=1e-10, L2_H_RNA=1e-10,
     L1_T=1e-10, L2_T=1e-10,
     L1_H_Epi=1e-10, L2_H_Epi=1e-10,
+    orderReg=FALSE,
     J=3, Beta=2, root=FALSE, thr=1e-10, viz=FALSE, figdir=NULL,
     init = c("RandomEpi", "RandomRNA", "Random", "NMFAlign", "NMFAlign2"),
     num.iter=30, verbose=FALSE){
@@ -62,7 +64,7 @@ Machima <- function(X_RNA, X_Epi, label=NULL, T=NULL,
         orthW_RNA, orthH_RNA, orthT, orthH_Epi,
         pseudocount,
         L1_W_RNA, L2_W_RNA, L1_H_RNA, L2_H_RNA,
-        L1_T, L2_T, L1_H_Epi, L2_H_Epi,
+        L1_T, L2_T, L1_H_Epi, L2_H_Epi, orderReg,
         J, Beta, root, thr, viz, figdir, num.iter, verbose)
     # Initialization
     int <- .initMachima(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr)
@@ -92,19 +94,19 @@ Machima <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     while ((RelChange[iter] > thr) && (iter <= num.iter)){
         pre_Error <- .recErrors(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Epi, Beta, Pi_RNA, Pi_Epi)
         # Step1: Update H_Epi
-        H_Epi <- .updateH_Epi(X_Epi, W_RNA, H_Epi, T, Beta, L1_H_Epi, L2_H_Epi, orthH_Epi, root, Pi_RNA, Pi_Epi)
+        H_Epi <- .updateH_Epi(X_Epi, W_RNA, H_Epi, T, J, Beta, L1_H_Epi, L2_H_Epi, orderReg, orthH_Epi, root, Pi_RNA, Pi_Epi)
         # Step2: Update T
         if(!fixT){
             T <- .updateT(W_RNA, X_Epi, H_Epi, T, Beta, L1_T, L2_T, orthT, root)
         }
         # Step3: Update W_RNA
         if(!fixW_RNA){
-            W_RNA <- .updateW_RNA(X_RNA, X_Epi, W_RNA, H_RNA, H_Epi, T, Beta, L1_W_RNA, L2_W_RNA, orthW_RNA, root, Pi_RNA, Pi_Epi)
+            W_RNA <- .updateW_RNA(X_RNA, X_Epi, W_RNA, H_RNA, H_Epi, T, J, Beta, L1_W_RNA, L2_W_RNA, orderReg, orthW_RNA, root, Pi_RNA, Pi_Epi)
         }
         # Step4: Update H_RNA
         if(!fixH_RNA){
-            H_RNA <- .updateH_RNA(X_RNA, W_RNA, H_RNA, Beta,
-                L1_H_RNA, L2_H_RNA, orthH_RNA, root, Pi_RNA, Pi_Epi)
+            H_RNA <- .updateH_RNA(X_RNA, W_RNA, H_RNA, J, Beta,
+                L1_H_RNA, L2_H_RNA, orderReg, orthH_RNA, root, Pi_RNA, Pi_Epi)
         }
         # X_GAM for visualization
         X_GAM <- .updateGAM(X_RNA, X_Epi, W_RNA, H_Epi)
