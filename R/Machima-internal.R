@@ -70,13 +70,18 @@
     }else{
         X_RNA2 <- do.call("rbind", X_RNA)
         W_RNA2 <- do.call("rbind", W_RNA)
+        if(is.list(X_GAM)){
+            X_GAM2 <- do.call("rbind", X_GAM)
+        }else{
+            X_GAM2 <- X_GAM
+        }
         recX_RNA2 <- W_RNA2 %*% H_RNA
         X_Epi2 <- do.call("rbind", X_Epi)
         recX_Epi2 <- do.call("rbind",
             lapply(seq_along(T), function(x){
             T[[x]] %*% W_RNA[[x]] %*% H_Epi
         }))
-        .multiImagePlots2_List(list(X_RNA2, recX_RNA2, W_RNA2, H_RNA, X_GAM,
+        .multiImagePlots2_List(list(X_RNA2, recX_RNA2, W_RNA2, H_RNA, X_GAM2,
             X_Epi2, recX_Epi2, H_Epi, T))
     }
 }
