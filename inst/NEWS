@@ -1,3 +1,15 @@
+VERSION 0.99.1
+------------------------
+   o Added Machima2() for symmetric epigenomic matrices
+     (X_Epi ~ G * H_Sym * t(G), where G = T * W_RNA)
+   o Fixed BetaDivergence formula for Beta != 0, 1, 2
+     (operator precedence bug and X/Y swap)
+   o Fixed L1_W_RNA parameter being unused in W_RNA updates
+   o Removed dead code in orthogonal H_RNA update
+   o Fixed horizontal mode RecError to match optimization objective
+   o Extracted shared cell type matching logic (.estimateCelltypes)
+   o Added plot.new to NAMESPACE imports
+
 VERSION 0.99.0
 ------------------------
    o Package released

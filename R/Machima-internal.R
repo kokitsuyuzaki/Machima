@@ -134,11 +134,11 @@ image.plot2 <- function(A, ...){
 
 .BetaDivergence <- function(X, Y, Beta){
     if(Beta == 1){
-        d_Beta <- sum(Y * (log(Y) - log(X)) + (X - Y))
+        d_Beta <- sum(X * (log(X) - log(Y)) + (Y - X))
     }else if(Beta == 0){
-        d_Beta <- sum((Y / X) - log(Y / X) - 1)
+        d_Beta <- sum((X / Y) - log(X / Y) - 1)
     }else{
-        d_Beta <- sum((Y^Beta / Beta * (Beta - 1)) + (X^Beta / Beta) - (Y * X^(Beta-1) / (Beta - 1)))
+        d_Beta <- sum((X^Beta / (Beta * (Beta - 1))) + (Y^Beta / Beta) - (X * Y^(Beta-1) / (Beta - 1)))
     }
     d_Beta
 }
@@ -163,6 +163,33 @@ image.plot2 <- function(A, ...){
         Pi_RNA[[x]] * .BetaDivergence(X_RNA[[x]], W_RNA[[x]]%*%H_RNA, Beta)})))
     rights <- sum(unlist(lapply(seq_along(X_Epi), function(x){
         Pi_Epi[[x]] * .BetaDivergence(X_Epi[[x]], T[[x]]%*%W_RNA[[x]]%*%H_Epi, Beta)})))
+    lefts + rights
+}
+
+# Horizontal mode: RecError aligned with optimization objective
+# Epi term uses D_beta(X_GAM, W*H_Epi) instead of D_beta(X_Epi, T*W*H_Epi)
+.recErrors_HZL <- function(X_RNA, W_RNA, H_RNA, X_GAM, H_Epi, Beta, Pi_RNA, Pi_Epi){
+    if(is.matrix(X_RNA)){
+        d_Beta <- .recErrors_HZL_Matrix(X_RNA, W_RNA, H_RNA, X_GAM, H_Epi, Beta, Pi_RNA, Pi_Epi)
+    }else{
+        d_Beta <- .recErrors_HZL_List(X_RNA, W_RNA, H_RNA, X_GAM, H_Epi, Beta, Pi_RNA, Pi_Epi)
+    }
+    d_Beta
+}
+
+.recErrors_HZL_Matrix <- function(X_RNA, W_RNA, H_RNA, X_GAM, H_Epi, Beta, Pi_RNA, Pi_Epi){
+    left <- Pi_RNA * .BetaDivergence(X_RNA, W_RNA %*% H_RNA, Beta)
+    right <- Pi_Epi * .BetaDivergence(X_GAM, W_RNA %*% H_Epi, Beta)
+    left + right
+}
+
+.recErrors_HZL_List <- function(X_RNA, W_RNA, H_RNA, X_GAM, H_Epi, Beta, Pi_RNA, Pi_Epi){
+    lefts <- sum(unlist(lapply(seq_along(X_RNA), function(x){
+        Pi_RNA[[x]] * .BetaDivergence(X_RNA[[x]], W_RNA[[x]] %*% H_RNA, Beta)
+    })))
+    rights <- sum(unlist(lapply(seq_along(X_GAM), function(x){
+        Pi_Epi[[x]] * .BetaDivergence(X_GAM[[x]], W_RNA[[x]] %*% H_Epi, Beta)
+    })))
     lefts + rights
 }
 

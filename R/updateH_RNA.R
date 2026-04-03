@@ -16,7 +16,6 @@
     numer <- t(t(WH^(Beta - 2) * X_RNA) %*% W_RNA)
     if(orthH_RNA){
         denom1 <- (H_RNA %*% t(H_RNA) %*% t(W_RNA) %*% X_RNA) + L1_H_RNA + L2_H_RNA * H_RNA
-        t(H_RNA) %*% H_RNA %*% t(X_RNA) %*% W_RNA
     }else{
         denom1 <- t(t(WH^(Beta - 1)) %*% W_RNA) + L1_H_RNA + L2_H_RNA * H_RNA
     }

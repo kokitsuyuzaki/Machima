@@ -20,7 +20,7 @@ Machima(
   orthH_RNA = FALSE,
   orthT = FALSE,
   orthH_Epi = FALSE,
-  pseudocount = 1e-10,
+  pseudocount = .Machine$double.eps,
   L1_W_RNA = 1e-10,
   L2_W_RNA = 1e-10,
   L1_H_RNA = 1e-10,
@@ -29,13 +29,15 @@ Machima(
   L2_T = 1e-10,
   L1_H_Epi = 1e-10,
   L2_H_Epi = 1e-10,
+  orderReg = FALSE,
+  horizontal = FALSE,
   J = 3,
   Beta = 2,
   root = FALSE,
   thr = 1e-10,
   viz = FALSE,
   figdir = NULL,
-  init = c("RandomEpi", "RandomRNA", "Random", "NMFAlign"),
+  init = c("RandomEpi", "RandomRNA", "Random", "NMFAlign", "NMFAlign2"),
   num.iter = 30,
   verbose = FALSE
 )
@@ -63,7 +65,7 @@ Machima(
 
 \item{orthH_Epi}{Orthogonal option of H_Epi (for uniqueness, Default: FALSE)}
 
-\item{pseudocount}{Pseudo count (Default: 1e-10)}
+\item{pseudocount}{Pseudo count to avoid zero division (Default: Machine Epsilon)}
 
 \item{L1_W_RNA}{Parameter for L1-norm regularization of W_RNA (Default: 1e-10)}
 
@@ -80,6 +82,10 @@ Machima(
 \item{L1_H_Epi}{Parameter for L1-norm regularization of H_Epi (Default: 1e-10)}
 
 \item{L2_H_Epi}{Parameter for L2-norm regularization of H_Epi (Default: 1e-10)}
+
+\item{orderReg}{Order regularization to sort the column vectors of W_RNA, H_RNA, and H_Epi by the L2 norm in ascending order (Default: FALSE)}
+
+\item{horizontal}{Horizontal-mode, which means normal joint NMF (Default: FALSE)}
 
 \item{J}{Rank parameter to decompose (Default: 3)}
 

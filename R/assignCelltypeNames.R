@@ -1,14 +1,5 @@
-.assignCelltypeNames <- function(X_RNA, X_Epi, label, W_RNA, H_RNA, H_Epi){
-    if(is.matrix(X_RNA) && is.matrix(X_Epi)){
-        asn <- .assignCelltypeNames_Matrix(X_RNA, label, W_RNA, H_RNA, H_Epi)
-    }else{
-        asn <- .assignCelltypeNames_List(X_RNA, label, W_RNA, H_RNA, H_Epi)
-    }
-    asn
-}
-
-.assignCelltypeNames_Matrix <- function(X_RNA, label, W_RNA, H_RNA, H_Epi){
-    # Setting
+# Shared matching logic: estimate cell type names from W_RNA and labels
+.estimateCelltypes <- function(X_RNA, label, W_RNA){
     uniq.celltypes <- unique(label)
     components <- paste0("component", seq(ncol(W_RNA)))
     # Average vectors
@@ -25,7 +16,6 @@
     cor.matrix[which(is.na(cor.matrix))] <- 0
     rownames(cor.matrix) <- uniq.celltypes
     colnames(cor.matrix) <- components
-
     if(length(uniq.celltypes) > length(components)){
         related.component <- apply(cor.matrix, 1, function(x){
             which(x == max(x))[1]
@@ -42,7 +32,20 @@
         g <- graph_from_incidence_matrix(cor.matrix, weighted=TRUE)
         estimated.celltypes <- as.vector(max_bipartite_match(g)$matching[components])
     }
-    # Assign
+    estimated.celltypes
+}
+
+.assignCelltypeNames <- function(X_RNA, X_Epi, label, W_RNA, H_RNA, H_Epi){
+    if(is.matrix(X_RNA) && is.matrix(X_Epi)){
+        asn <- .assignCelltypeNames_Matrix(X_RNA, label, W_RNA, H_RNA, H_Epi)
+    }else{
+        asn <- .assignCelltypeNames_List(X_RNA, label, W_RNA, H_RNA, H_Epi)
+    }
+    asn
+}
+
+.assignCelltypeNames_Matrix <- function(X_RNA, label, W_RNA, H_RNA, H_Epi){
+    estimated.celltypes <- .estimateCelltypes(X_RNA, label, W_RNA)
     colnames(W_RNA) <- estimated.celltypes
     rownames(H_RNA) <- estimated.celltypes
     rownames(H_Epi) <- estimated.celltypes

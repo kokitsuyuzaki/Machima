@@ -41,7 +41,7 @@
 #' out <- Machima(X_RNA, X_Epi, T=NULL, verbose=TRUE)
 #' @importFrom nnTensor NMF
 #' @importFrom fields image.plot
-#' @importFrom graphics layout
+#' @importFrom graphics layout plot.new
 #' @importFrom grDevices dev.off png
 #' @importFrom stats runif cor
 #' @importFrom igraph graph_from_incidence_matrix max_bipartite_match
@@ -93,7 +93,11 @@ Machima <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     # Iteration
     iter <- 1
     while ((RelChange[iter] > thr) && (iter <= num.iter)){
-        pre_Error <- .recErrors(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Epi, Beta, Pi_RNA, Pi_Epi)
+        if(horizontal){
+            pre_Error <- .recErrors_HZL(X_RNA, W_RNA, H_RNA, X_GAM, H_Epi, Beta, Pi_RNA, Pi_Epi)
+        }else{
+            pre_Error <- .recErrors(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Epi, Beta, Pi_RNA, Pi_Epi)
+        }
         # Horizontal Mode
         if(horizontal){
             # Update1: H_Epi
@@ -132,7 +136,11 @@ Machima <- function(X_RNA, X_Epi, label=NULL, T=NULL,
             cat(paste0(iter, " / ", num.iter, "\n"))
         }
         iter <- iter + 1
-        RecError[iter] <- .recErrors(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Epi, Beta, Pi_RNA, Pi_Epi)
+        if(horizontal){
+            RecError[iter] <- .recErrors_HZL(X_RNA, W_RNA, H_RNA, X_GAM, H_Epi, Beta, Pi_RNA, Pi_Epi)
+        }else{
+            RecError[iter] <- .recErrors(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Epi, Beta, Pi_RNA, Pi_Epi)
+        }
         RelChange[iter] <- abs(pre_Error - RecError[iter]) / RecError[iter]
         if(viz && !is.null(figdir)){
             png(filename = paste0(figdir, "/", iter, ".png"),
