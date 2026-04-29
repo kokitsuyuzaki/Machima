@@ -9,3 +9,4 @@
 ^.*\.Rhistory$
 ^Dockerfile$
 ^CLAUDE\.md$
+^machima2_init_api_prompt\.md$

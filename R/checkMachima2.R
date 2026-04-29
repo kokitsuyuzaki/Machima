@@ -1,10 +1,12 @@
 .checkMachima2 <- function(X_RNA, X_Epi, label, T,
-    fixW_RNA, fixH_RNA, fixT,
+    fixW_RNA, fixH_RNA, fixT, fixH_Sym,
     orthW_RNA, orthH_RNA, orthT, orthH_Sym,
     pseudocount,
     L1_W_RNA, L2_W_RNA, L1_H_RNA, L2_H_RNA,
     L1_T, L2_T, L1_H_Sym, L2_H_Sym, orderReg, horizontal,
-    J, Beta, root, thr, viz, figdir, num.iter, verbose){
+    J, Beta, root, thr, viz, figdir, num.iter, verbose,
+    init_W_RNA, init_H_RNA, init_H_Sym,
+    nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm){
     # Check X_RNA
     check1 <- is.matrix(X_RNA)
     check2 <- is.list(X_RNA)
@@ -96,6 +98,7 @@
     stopifnot(is.logical(fixW_RNA))
     stopifnot(is.logical(fixH_RNA))
     stopifnot(is.logical(fixT))
+    stopifnot(is.logical(fixH_Sym))
     # Check Orthogonal
     stopifnot(is.logical(orthW_RNA))
     stopifnot(is.logical(orthH_RNA))
@@ -143,4 +146,80 @@
     stopifnot(num.iter >= 0)
     # Check verbose
     stopifnot(is.logical(verbose))
+    # Check init_W_RNA
+    if(!is.null(init_W_RNA)){
+        if(check1){
+            if(!is.matrix(init_W_RNA)){
+                stop("init_W_RNA must be a matrix when X_RNA is a matrix")
+            }
+            if(nrow(init_W_RNA) != nrow(X_RNA)){
+                stop(paste0("init_W_RNA has ", nrow(init_W_RNA),
+                    " rows but X_RNA has ", nrow(X_RNA), " rows"))
+            }
+            if(ncol(init_W_RNA) != J){
+                stop(paste0("init_W_RNA has ", ncol(init_W_RNA),
+                    " columns but J = ", J))
+            }
+        }
+        if(check2){
+            if(!is.list(init_W_RNA)){
+                stop("init_W_RNA must be a list when X_RNA is a list")
+            }
+            if(length(init_W_RNA) != length(X_RNA)){
+                stop(paste0("init_W_RNA has length ", length(init_W_RNA),
+                    " but X_RNA has length ", length(X_RNA)))
+            }
+            lapply(seq_along(init_W_RNA), function(x){
+                if(!is.matrix(init_W_RNA[[x]])){
+                    stop(paste0("init_W_RNA[[", x, "]] must be a matrix"))
+                }
+                if(nrow(init_W_RNA[[x]]) != nrow(X_RNA[[x]])){
+                    stop(paste0("init_W_RNA[[", x, "]] has ", nrow(init_W_RNA[[x]]),
+                        " rows but X_RNA[[", x, "]] has ", nrow(X_RNA[[x]]), " rows"))
+                }
+                if(ncol(init_W_RNA[[x]]) != J){
+                    stop(paste0("init_W_RNA[[", x, "]] has ", ncol(init_W_RNA[[x]]),
+                        " columns but J = ", J))
+                }
+            })
+        }
+    }
+    # Check init_H_RNA
+    if(!is.null(init_H_RNA)){
+        if(!is.matrix(init_H_RNA)){
+            stop("init_H_RNA must be a matrix")
+        }
+        if(check1){
+            expected_m <- ncol(X_RNA)
+        }else{
+            expected_m <- ncol(X_RNA[[1]])
+        }
+        if(nrow(init_H_RNA) != J){
+            stop(paste0("init_H_RNA has ", nrow(init_H_RNA),
+                " rows but J = ", J))
+        }
+        if(ncol(init_H_RNA) != expected_m){
+            stop(paste0("init_H_RNA has ", ncol(init_H_RNA),
+                " columns but expected ", expected_m))
+        }
+    }
+    # Check init_H_Sym
+    if(!is.null(init_H_Sym)){
+        if(!is.matrix(init_H_Sym)){
+            stop("init_H_Sym must be a matrix")
+        }
+        if(nrow(init_H_Sym) != J || ncol(init_H_Sym) != J){
+            stop(paste0("init_H_Sym must be ", J, " x ", J,
+                " but is ", nrow(init_H_Sym), " x ", ncol(init_H_Sym)))
+        }
+        if(!isSymmetric(unname(init_H_Sym))){
+            stop("init_H_Sym must be a symmetric matrix")
+        }
+    }
+    # Check NMF init parameters
+    stopifnot(is.numeric(nmf_init_n_restart))
+    stopifnot(nmf_init_n_restart >= 1)
+    stopifnot(is.numeric(nmf_init_num_iter))
+    stopifnot(nmf_init_num_iter >= 1)
+    stopifnot(is.character(nmf_init_algorithm))
 }

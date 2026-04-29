@@ -2,6 +2,7 @@
 
 export(Machima)
 export(Machima2)
+export(Mat2List)
 importFrom(fields,image.plot)
 importFrom(grDevices,dev.off)
 importFrom(grDevices,png)

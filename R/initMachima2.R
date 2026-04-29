@@ -1,8 +1,14 @@
-.initMachima2 <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr){
+.initMachima2 <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
+    init_W_RNA, init_H_RNA, init_H_Sym,
+    nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm){
     if(is.matrix(X_RNA) && is.matrix(X_Epi)){
-        int <- .initMachima2_Matrix(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr)
+        int <- .initMachima2_Matrix(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
+            init_W_RNA, init_H_RNA, init_H_Sym,
+            nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm)
     }else{
-        int <- .initMachima2_List(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr)
+        int <- .initMachima2_List(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
+            init_W_RNA, init_H_RNA, init_H_Sym,
+            nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm)
     }
     int
 }
@@ -12,14 +18,18 @@
     (A + t(A)) / 2
 }
 
-.initMachima2_Matrix <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr){
+.initMachima2_Matrix <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
+    init_W_RNA, init_H_RNA, init_H_Sym,
+    nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm){
     X_RNA[which(X_RNA == 0)] <- pseudocount
     X_Epi[which(X_Epi == 0)] <- pseudocount
     # Symmetrize after pseudocount
     X_Epi <- (X_Epi + t(X_Epi)) / 2
     if(init == "RandomEpi"){
         # NMF with RNA
-        out1_1 <- .reArrangeOuts(.returnBestNMF(X_RNA, J=J), X_RNA)
+        out1_1 <- .reArrangeOuts(.returnBestNMF(X_RNA, J=J,
+            n_restart=nmf_init_n_restart, num_iter=nmf_init_num_iter,
+            algorithm=nmf_init_algorithm), X_RNA)
         out1_2 <- .normalizeCols(out1_1$V)
         W_RNA <- t(t(out1_1$U) * out1_2$normA)
         H_RNA <- t(out1_2$A)
@@ -60,6 +70,10 @@
             T <- matrix(runif(nr*nc), nrow=nr, ncol=nc)
         }
     }
+    # Override with user-supplied init values
+    if(!is.null(init_W_RNA)) W_RNA <- init_W_RNA
+    if(!is.null(init_H_RNA)) H_RNA <- init_H_RNA
+    if(!is.null(init_H_Sym)) H_Sym <- init_H_Sym
     # Weight
     Pi_RNA <- .weight(X_RNA)
     Pi_Epi <- .weight(X_Epi)
@@ -74,7 +88,9 @@
         RecError=RecError, RelChange=RelChange)
 }
 
-.initMachima2_List <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr){
+.initMachima2_List <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
+    init_W_RNA, init_H_RNA, init_H_Sym,
+    nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm){
     X_RNA <- lapply(X_RNA, function(x){
         x[which(x == 0)] <- pseudocount
         x
@@ -86,7 +102,9 @@
     X_RNA2 <- do.call("rbind", X_RNA)
     if(init == "RandomEpi"){
         # NMF with RNA
-        out1_1 <- .reArrangeOuts(.returnBestNMF(X_RNA2, J=J), X_RNA2)
+        out1_1 <- .reArrangeOuts(.returnBestNMF(X_RNA2, J=J,
+            n_restart=nmf_init_n_restart, num_iter=nmf_init_num_iter,
+            algorithm=nmf_init_algorithm), X_RNA2)
         out1_2 <- .normalizeCols(out1_1$V)
         W_RNA <- .Mat2List(X_RNA, out1_1$U)
         H_RNA <- t(out1_2$A * out1_2$normA)
@@ -133,6 +151,10 @@
             })
         }
     }
+    # Override with user-supplied init values
+    if(!is.null(init_W_RNA)) W_RNA <- init_W_RNA
+    if(!is.null(init_H_RNA)) H_RNA <- init_H_RNA
+    if(!is.null(init_H_Sym)) H_Sym <- init_H_Sym
     # Weight
     Pi_RNA <- lapply(X_RNA, .weight)
     Pi_Epi <- lapply(X_Epi, .weight)

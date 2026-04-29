@@ -51,9 +51,10 @@
     out
 }
 
-.returnBestNMF <- function(X, J){
-    outs <- lapply(seq(1), function(x){
-        NMF(X, J=J, num.iter=30, algorithm="Frobenius")
+.returnBestNMF <- function(X, J, n_restart=1L, num_iter=30L,
+    algorithm="Frobenius"){
+    outs <- lapply(seq_len(n_restart), function(x){
+        NMF(X, J=J, num.iter=num_iter, algorithm=algorithm)
     })
     bestfit <- unlist(lapply(outs, function(x){rev(x$RecError)[1]}))
     bestfit <- which(bestfit == min(bestfit))[1]

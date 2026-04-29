@@ -12,6 +12,7 @@ Machima2(
   fixW_RNA = FALSE,
   fixH_RNA = FALSE,
   fixT = FALSE,
+  fixH_Sym = FALSE,
   orthW_RNA = FALSE,
   orthH_RNA = FALSE,
   orthT = FALSE,
@@ -35,7 +36,13 @@ Machima2(
   figdir = NULL,
   init = c("Random", "RandomEpi", "RandomRNA"),
   num.iter = 30,
-  verbose = FALSE
+  verbose = FALSE,
+  init_W_RNA = NULL,
+  init_H_RNA = NULL,
+  init_H_Sym = NULL,
+  nmf_init_n_restart = 1L,
+  nmf_init_num_iter = 30L,
+  nmf_init_algorithm = "Frobenius"
 )
 }
 \arguments{
@@ -52,6 +59,8 @@ Machima2(
 \item{fixH_RNA}{Fix value option of H_RNA (Default: FALSE)}
 
 \item{fixT}{Fix value option of T (Default: FALSE)}
+
+\item{fixH_Sym}{Fix value option of H_Sym (Default: FALSE)}
 
 \item{orthW_RNA}{Orthogonal option of W_RNA (Default: FALSE)}
 
@@ -100,6 +109,18 @@ Machima2(
 \item{num.iter}{The number of iteration (Default: 30)}
 
 \item{verbose}{Verbose option (Default: FALSE)}
+
+\item{init_W_RNA}{User-supplied initial W_RNA: a matrix (n x J) or list of matrices (Default: NULL)}
+
+\item{init_H_RNA}{User-supplied initial H_RNA: a (J x m) matrix (Default: NULL)}
+
+\item{init_H_Sym}{User-supplied initial H_Sym: a (J x J) symmetric matrix (Default: NULL)}
+
+\item{nmf_init_n_restart}{Number of NMF restarts for init (Default: 1)}
+
+\item{nmf_init_num_iter}{Number of NMF iterations for init (Default: 30)}
+
+\item{nmf_init_algorithm}{NMF algorithm for init (Default: "Frobenius")}
 }
 \value{
 A list containing W_RNA, H_RNA, H_Sym, T, RecError, RelChange
@@ -115,4 +136,11 @@ X_RNA <- matrix(runif(20*30), nrow=20, ncol=30)
 S <- matrix(runif(15*15), nrow=15, ncol=15)
 X_Epi <- (S + t(S)) / 2
 out <- Machima2(X_RNA, X_Epi, T=NULL, verbose=TRUE)
+\dontrun{
+# Two-stage workflow: pre-compute NMF, then freeze RNA factors
+nmf_res <- nnTensor::NMF(X_RNA, J=3, num.iter=200, algorithm="KL")
+out2 <- Machima2(X_RNA, X_Epi,
+    init_W_RNA=nmf_res$U, init_H_RNA=t(nmf_res$V),
+    fixW_RNA=TRUE, fixH_RNA=TRUE, J=3)
+}
 }

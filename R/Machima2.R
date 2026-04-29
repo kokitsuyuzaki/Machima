@@ -12,6 +12,7 @@
 #' @param fixW_RNA Fix value option of W_RNA (Default: FALSE)
 #' @param fixH_RNA Fix value option of H_RNA (Default: FALSE)
 #' @param fixT Fix value option of T (Default: FALSE)
+#' @param fixH_Sym Fix value option of H_Sym (Default: FALSE)
 #' @param orthW_RNA Orthogonal option of W_RNA (Default: FALSE)
 #' @param orthH_RNA Orthogonal option of H_RNA (Default: FALSE)
 #' @param orthT Orthogonal option of T (Default: FALSE)
@@ -36,15 +37,28 @@
 #' @param init Initial value algorithm (Default: "Random")
 #' @param num.iter The number of iteration (Default: 30)
 #' @param verbose Verbose option (Default: FALSE)
+#' @param init_W_RNA User-supplied initial W_RNA: a matrix (n x J) or list of matrices (Default: NULL)
+#' @param init_H_RNA User-supplied initial H_RNA: a (J x m) matrix (Default: NULL)
+#' @param init_H_Sym User-supplied initial H_Sym: a (J x J) symmetric matrix (Default: NULL)
+#' @param nmf_init_n_restart Number of NMF restarts for init (Default: 1)
+#' @param nmf_init_num_iter Number of NMF iterations for init (Default: 30)
+#' @param nmf_init_algorithm NMF algorithm for init (Default: "Frobenius")
 #' @return A list containing W_RNA, H_RNA, H_Sym, T, RecError, RelChange
 #' @examples
 #' X_RNA <- matrix(runif(20*30), nrow=20, ncol=30)
 #' S <- matrix(runif(15*15), nrow=15, ncol=15)
 #' X_Epi <- (S + t(S)) / 2
 #' out <- Machima2(X_RNA, X_Epi, T=NULL, verbose=TRUE)
+#' \dontrun{
+#' # Two-stage workflow: pre-compute NMF, then freeze RNA factors
+#' nmf_res <- nnTensor::NMF(X_RNA, J=3, num.iter=200, algorithm="KL")
+#' out2 <- Machima2(X_RNA, X_Epi,
+#'     init_W_RNA=nmf_res$U, init_H_RNA=t(nmf_res$V),
+#'     fixW_RNA=TRUE, fixH_RNA=TRUE, J=3)
+#' }
 #' @export
 Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
-    fixW_RNA=FALSE, fixH_RNA=FALSE, fixT=FALSE,
+    fixW_RNA=FALSE, fixH_RNA=FALSE, fixT=FALSE, fixH_Sym=FALSE,
     orthW_RNA=FALSE, orthH_RNA=FALSE, orthT=FALSE, orthH_Sym=FALSE,
     pseudocount=.Machine$double.eps,
     L1_W_RNA=1e-10, L2_W_RNA=1e-10,
@@ -54,18 +68,25 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     orderReg=FALSE, horizontal=FALSE,
     J=3, Beta=2, root=FALSE, thr=1e-10, viz=FALSE, figdir=NULL,
     init = c("Random", "RandomEpi", "RandomRNA"),
-    num.iter=30, verbose=FALSE){
+    num.iter=30, verbose=FALSE,
+    init_W_RNA=NULL, init_H_RNA=NULL, init_H_Sym=NULL,
+    nmf_init_n_restart=1L, nmf_init_num_iter=30L,
+    nmf_init_algorithm="Frobenius"){
     # Argument Check
     init <- match.arg(init)
     .checkMachima2(X_RNA, X_Epi, label, T,
-        fixW_RNA, fixH_RNA, fixT,
+        fixW_RNA, fixH_RNA, fixT, fixH_Sym,
         orthW_RNA, orthH_RNA, orthT, orthH_Sym,
         pseudocount,
         L1_W_RNA, L2_W_RNA, L1_H_RNA, L2_H_RNA,
         L1_T, L2_T, L1_H_Sym, L2_H_Sym, orderReg, horizontal,
-        J, Beta, root, thr, viz, figdir, num.iter, verbose)
+        J, Beta, root, thr, viz, figdir, num.iter, verbose,
+        init_W_RNA, init_H_RNA, init_H_Sym,
+        nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm)
     # Initialization
-    int <- .initMachima2(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr)
+    int <- .initMachima2(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
+        init_W_RNA, init_H_RNA, init_H_Sym,
+        nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm)
     X_RNA <- int$X_RNA
     X_Epi <- int$X_Epi
     W_RNA <- int$W_RNA
@@ -101,8 +122,10 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
         # Horizontal Mode
         if(horizontal){
             # Update1: H_Sym
-            H_Sym <- .updateH_Sym_HZL(X_GAM, W_RNA, H_Sym, J, Beta,
-                L1_H_Sym, L2_H_Sym, orderReg, orthH_Sym, root, Pi_RNA, Pi_Epi)
+            if(!fixH_Sym){
+                H_Sym <- .updateH_Sym_HZL(X_GAM, W_RNA, H_Sym, J, Beta,
+                    L1_H_Sym, L2_H_Sym, orderReg, orthH_Sym, root, Pi_RNA, Pi_Epi)
+            }
             # Update2: W_RNA
             if(!fixW_RNA){
                 W_RNA <- .updateW_RNA2_HZL(X_RNA, X_GAM, W_RNA, H_RNA, H_Sym, J, Beta,
@@ -116,8 +139,10 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
         # Tri-factorization Mode
         }else{
             # Step1: Update H_Sym
-            H_Sym <- .updateH_Sym(X_Epi, W_RNA, H_Sym, T, J, Beta,
-                L1_H_Sym, L2_H_Sym, orderReg, orthH_Sym, root, Pi_RNA, Pi_Epi)
+            if(!fixH_Sym){
+                H_Sym <- .updateH_Sym(X_Epi, W_RNA, H_Sym, T, J, Beta,
+                    L1_H_Sym, L2_H_Sym, orderReg, orthH_Sym, root, Pi_RNA, Pi_Epi)
+            }
             # Step2: Update T
             if(!fixT){
                 T <- .updateT2(W_RNA, X_Epi, H_Sym, T, Beta, L1_T, L2_T, orthT, root)

@@ -2,6 +2,13 @@ VERSION 0.99.1
 ------------------------
    o Added Machima2() for symmetric epigenomic matrices
      (X_Epi ~ G * H_Sym * t(G), where G = T * W_RNA)
+   o Added init_W_RNA, init_H_RNA, init_H_Sym params to Machima2()
+     for user-supplied initialization (two-stage workflows)
+   o Added fixH_Sym param to Machima2()
+   o Added nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm
+     params to control internal NMF initialization
+   o Fixed .returnBestNMF to support configurable restarts/iter/algorithm
+   o Exported Mat2List() for splitting stacked matrices into per-group lists
    o Fixed BetaDivergence formula for Beta != 0, 1, 2
      (operator precedence bug and X/Y swap)
    o Fixed L1_W_RNA parameter being unused in W_RNA updates
