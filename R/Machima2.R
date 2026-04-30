@@ -15,6 +15,13 @@
 #' bulk variance of X_Epi; their H_Sym diagonal entry is typically the largest.
 #' Downstream analyses may drop or baseline-correct \code{"comp_*"} entries.
 #'
+#' When \code{H_Sym_structure = "diagonal"}, the model becomes symmetric CP:
+#' \code{X_Epi[k] = sum_i h_i * g_i[k] * g_i[k]^T}, where each component has
+#' an independent contact pattern weighted by \code{h_i = H_Sym[i,i]}. This is
+#' the natural choice when cross-type "interaction" (off-diagonal) is not
+#' biologically meaningful. The default \code{"symmetric"} mode allows off-diagonal
+#' entries to capture co-occurrence of contacts between components.
+#'
 #' @param X_RNA Single-cell RNA-Seq matrix (n x m) or list of matrices
 #' @param X_Epi Symmetric epigenome matrix (l x l) or list of symmetric matrices
 #' @param label A length-m character vector to specify the cell type within X_RNA (Default: NULL)
@@ -56,6 +63,7 @@
 #' @param T_regularization Regularization strategy for T: "none", "frobenius_unit", "l2", or "low_rank". Ignored when fixT=TRUE. (Default: "none")
 #' @param lambda_T L2 penalty strength for T when T_regularization="l2" (Default: 0)
 #' @param T_rank Rank of low-rank T parametrization (T=U*t(V)). Required when T_regularization="low_rank". (Default: NULL)
+#' @param H_Sym_structure Constrain H_Sym to "symmetric" (default; full J(J+1)/2 parameters; symmetric Tucker) or "diagonal" (J diagonal entries only; symmetric CP / sym-PARAFAC). The diagonal option is recommended for cell-type deconvolution of bulk Hi-C. (Default: "symmetric")
 #' @return A list containing W_RNA, H_RNA, H_Sym, T, RecError, RelChange. When T_regularization="low_rank", also T_factors (list with U and V).
 #' @examples
 #' X_RNA <- matrix(runif(20*30), nrow=20, ncol=30)
@@ -86,10 +94,12 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     nmf_init_n_restart=1L, nmf_init_num_iter=30L,
     nmf_init_algorithm="Frobenius",
     T_regularization=c("none", "frobenius_unit", "l2", "low_rank"),
-    lambda_T=0, T_rank=NULL){
+    lambda_T=0, T_rank=NULL,
+    H_Sym_structure=c("symmetric", "diagonal")){
     # Argument Check
     init <- match.arg(init)
     T_regularization <- match.arg(T_regularization)
+    H_Sym_structure <- match.arg(H_Sym_structure)
     .checkMachima2(X_RNA, X_Epi, label, T,
         fixW_RNA, fixH_RNA, fixT, fixH_Sym,
         orthW_RNA, orthH_RNA, orthT, orthH_Sym,
@@ -99,12 +109,12 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
         J, Beta, root, thr, viz, figdir, num.iter, verbose,
         init_W_RNA, init_H_RNA, init_H_Sym,
         nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-        T_regularization, lambda_T, T_rank)
+        T_regularization, lambda_T, T_rank, H_Sym_structure)
     # Initialization
     int <- .initMachima2(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
         init_W_RNA, init_H_RNA, init_H_Sym,
         nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-        T_regularization, T_rank)
+        T_regularization, T_rank, H_Sym_structure)
     X_RNA <- int$X_RNA
     X_Epi <- int$X_Epi
     W_RNA <- int$W_RNA
@@ -147,6 +157,7 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
             if(!fixH_Sym){
                 H_Sym <- .updateH_Sym_HZL(X_GAM, W_RNA, H_Sym, J, Beta,
                     L1_H_Sym, L2_H_Sym, orderReg, orthH_Sym, root, Pi_RNA, Pi_Epi)
+                if(H_Sym_structure == "diagonal") H_Sym <- diag(diag(H_Sym))
             }
             # Update2: W_RNA
             if(!fixW_RNA){
@@ -164,6 +175,7 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
             if(!fixH_Sym){
                 H_Sym <- .updateH_Sym(X_Epi, W_RNA, H_Sym, T, J, Beta,
                     L1_H_Sym, L2_H_Sym, orderReg, orthH_Sym, root, Pi_RNA, Pi_Epi)
+                if(H_Sym_structure == "diagonal") H_Sym <- diag(diag(H_Sym))
             }
             # Step2: Update T
             if(!fixT){

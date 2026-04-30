@@ -7,7 +7,7 @@
     J, Beta, root, thr, viz, figdir, num.iter, verbose,
     init_W_RNA, init_H_RNA, init_H_Sym,
     nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-    T_regularization, lambda_T, T_rank){
+    T_regularization, lambda_T, T_rank, H_Sym_structure){
     # Check X_RNA
     check1 <- is.matrix(X_RNA)
     check2 <- is.list(X_RNA)
@@ -259,4 +259,6 @@
             warning("T_rank ignored when T_regularization is not 'low_rank'")
         }
     }
+    # Check H_Sym_structure
+    stopifnot(H_Sym_structure %in% c("symmetric", "diagonal"))
 }

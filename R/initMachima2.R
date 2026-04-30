@@ -1,17 +1,17 @@
 .initMachima2 <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
     init_W_RNA, init_H_RNA, init_H_Sym,
     nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-    T_regularization, T_rank){
+    T_regularization, T_rank, H_Sym_structure){
     if(is.matrix(X_RNA) && is.matrix(X_Epi)){
         int <- .initMachima2_Matrix(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
             init_W_RNA, init_H_RNA, init_H_Sym,
             nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-            T_regularization, T_rank)
+            T_regularization, T_rank, H_Sym_structure)
     }else{
         int <- .initMachima2_List(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
             init_W_RNA, init_H_RNA, init_H_Sym,
             nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-            T_regularization, T_rank)
+            T_regularization, T_rank, H_Sym_structure)
     }
     int
 }
@@ -24,7 +24,7 @@
 .initMachima2_Matrix <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
     init_W_RNA, init_H_RNA, init_H_Sym,
     nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-    T_regularization, T_rank){
+    T_regularization, T_rank, H_Sym_structure){
     X_RNA[which(X_RNA == 0)] <- pseudocount
     X_Epi[which(X_Epi == 0)] <- pseudocount
     # Symmetrize after pseudocount
@@ -78,6 +78,14 @@
     if(!is.null(init_W_RNA)) W_RNA <- init_W_RNA
     if(!is.null(init_H_RNA)) H_RNA <- init_H_RNA
     if(!is.null(init_H_Sym)) H_Sym <- init_H_Sym
+    # Diagonal H_Sym projection (Matrix)
+    if(H_Sym_structure == "diagonal"){
+        if(!is.null(init_H_Sym) && any(abs(init_H_Sym - diag(diag(init_H_Sym))) > 1e-12)){
+            warning("init_H_Sym has non-zero off-diagonal entries; ",
+                "projecting to diagonal because H_Sym_structure='diagonal'")
+        }
+        H_Sym <- diag(diag(H_Sym))
+    }
     # Low-rank T initialization
     U <- NULL
     V <- NULL
@@ -110,7 +118,7 @@
 .initMachima2_List <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
     init_W_RNA, init_H_RNA, init_H_Sym,
     nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-    T_regularization, T_rank){
+    T_regularization, T_rank, H_Sym_structure){
     X_RNA <- lapply(X_RNA, function(x){
         x[which(x == 0)] <- pseudocount
         x
@@ -175,6 +183,14 @@
     if(!is.null(init_W_RNA)) W_RNA <- init_W_RNA
     if(!is.null(init_H_RNA)) H_RNA <- init_H_RNA
     if(!is.null(init_H_Sym)) H_Sym <- init_H_Sym
+    # Diagonal H_Sym projection (List)
+    if(H_Sym_structure == "diagonal"){
+        if(!is.null(init_H_Sym) && any(abs(init_H_Sym - diag(diag(init_H_Sym))) > 1e-12)){
+            warning("init_H_Sym has non-zero off-diagonal entries; ",
+                "projecting to diagonal because H_Sym_structure='diagonal'")
+        }
+        H_Sym <- diag(diag(H_Sym))
+    }
     # Low-rank T initialization
     U <- NULL
     V <- NULL

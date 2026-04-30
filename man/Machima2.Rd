@@ -45,7 +45,8 @@ Machima2(
   nmf_init_algorithm = "Frobenius",
   T_regularization = c("none", "frobenius_unit", "l2", "low_rank"),
   lambda_T = 0,
-  T_rank = NULL
+  T_rank = NULL,
+  H_Sym_structure = c("symmetric", "diagonal")
 )
 }
 \arguments{
@@ -130,6 +131,8 @@ Machima2(
 \item{lambda_T}{L2 penalty strength for T when T_regularization="l2" (Default: 0)}
 
 \item{T_rank}{Rank of low-rank T parametrization (T=U*t(V)). Required when T_regularization="low_rank". (Default: NULL)}
+
+\item{H_Sym_structure}{Constrain H_Sym to "symmetric" (default; full J(J+1)/2 parameters; symmetric Tucker) or "diagonal" (J diagonal entries only; symmetric CP / sym-PARAFAC). The diagonal option is recommended for cell-type deconvolution of bulk Hi-C. (Default: "symmetric")}
 }
 \value{
 A list containing W_RNA, H_RNA, H_Sym, T, RecError, RelChange. When T_regularization="low_rank", also T_factors (list with U and V).
@@ -149,6 +152,13 @@ per-cluster average expression, then solving a max-weight bipartite matching
 Such components often act as background-absorbing factors that capture the
 bulk variance of X_Epi; their H_Sym diagonal entry is typically the largest.
 Downstream analyses may drop or baseline-correct \code{"comp_*"} entries.
+
+When \code{H_Sym_structure = "diagonal"}, the model becomes symmetric CP:
+\code{X_Epi[k] = sum_i h_i * g_i[k] * g_i[k]^T}, where each component has
+an independent contact pattern weighted by \code{h_i = H_Sym[i,i]}. This is
+the natural choice when cross-type "interaction" (off-diagonal) is not
+biologically meaningful. The default \code{"symmetric"} mode allows off-diagonal
+entries to capture co-occurrence of contacts between components.
 }
 \examples{
 X_RNA <- matrix(runif(20*30), nrow=20, ncol=30)
