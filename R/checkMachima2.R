@@ -7,7 +7,7 @@
     J, Beta, root, thr, viz, figdir, num.iter, verbose,
     init_W_RNA, init_H_RNA, init_H_Sym,
     nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-    T_regularization, lambda_T){
+    T_regularization, lambda_T, T_rank){
     # Check X_RNA
     check1 <- is.matrix(X_RNA)
     check2 <- is.list(X_RNA)
@@ -224,7 +224,39 @@
     stopifnot(nmf_init_num_iter >= 1)
     stopifnot(is.character(nmf_init_algorithm))
     # Check T_regularization
-    stopifnot(T_regularization %in% c("none", "frobenius_unit", "l2"))
+    stopifnot(T_regularization %in% c("none", "frobenius_unit", "l2", "low_rank"))
     stopifnot(is.numeric(lambda_T))
     stopifnot(lambda_T >= 0)
+    # Check T_rank
+    if(T_regularization == "low_rank"){
+        if(is.null(T_rank)){
+            stop("T_rank is required when T_regularization = 'low_rank'")
+        }
+        stopifnot(is.numeric(T_rank))
+        stopifnot(T_rank >= 1)
+        T_rank <- as.integer(T_rank)
+        if(fixT){
+            stop("fixT = TRUE is incompatible with T_regularization = 'low_rank'")
+        }
+        if(check1 && check3){
+            if(T_rank > min(nrow(X_Epi), nrow(X_RNA))){
+                stop(paste0("T_rank = ", T_rank, " exceeds min(l, n) = ",
+                    min(nrow(X_Epi), nrow(X_RNA))))
+            }
+        }
+        if(check2 && check4){
+            lapply(seq_along(X_RNA), function(x){
+                max_r <- min(nrow(X_Epi[[x]]), nrow(X_RNA[[x]]))
+                if(T_rank > max_r){
+                    stop(paste0("T_rank = ", T_rank,
+                        " exceeds min(l, n) = ", max_r,
+                        " for element ", x))
+                }
+            })
+        }
+    }else{
+        if(!is.null(T_rank)){
+            warning("T_rank ignored when T_regularization is not 'low_rank'")
+        }
+    }
 }

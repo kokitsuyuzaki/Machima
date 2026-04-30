@@ -5,6 +5,16 @@
 #' X_Epi (l x l, symmetric) is decomposed as G * H_Sym * t(G),
 #' where G = T * W_RNA (l x J) and H_Sym is J x J symmetric non-negative.
 #'
+#' @details
+#' When \code{label} is supplied, dimnames of \code{H_Sym} and rownames of
+#' \code{H_RNA} are assigned by correlating each component's H_RNA row with
+#' per-cluster average expression, then solving a max-weight bipartite matching
+#' (via \code{igraph::max_bipartite_match}). Components that remain unmatched
+#' (e.g. when J > number of clusters) are labeled \code{"comp_j"} instead of NA.
+#' Such components often act as background-absorbing factors that capture the
+#' bulk variance of X_Epi; their H_Sym diagonal entry is typically the largest.
+#' Downstream analyses may drop or baseline-correct \code{"comp_*"} entries.
+#'
 #' @param X_RNA Single-cell RNA-Seq matrix (n x m) or list of matrices
 #' @param X_Epi Symmetric epigenome matrix (l x l) or list of symmetric matrices
 #' @param label A length-m character vector to specify the cell type within X_RNA (Default: NULL)
@@ -43,9 +53,10 @@
 #' @param nmf_init_n_restart Number of NMF restarts for init (Default: 1)
 #' @param nmf_init_num_iter Number of NMF iterations for init (Default: 30)
 #' @param nmf_init_algorithm NMF algorithm for init (Default: "Frobenius")
-#' @param T_regularization Regularization strategy for T to prevent H_Sym collapse: "none", "frobenius_unit" (per-iteration normalization), or "l2" (penalty). Ignored when fixT=TRUE. (Default: "none")
+#' @param T_regularization Regularization strategy for T: "none", "frobenius_unit", "l2", or "low_rank". Ignored when fixT=TRUE. (Default: "none")
 #' @param lambda_T L2 penalty strength for T when T_regularization="l2" (Default: 0)
-#' @return A list containing W_RNA, H_RNA, H_Sym, T, RecError, RelChange
+#' @param T_rank Rank of low-rank T parametrization (T=U*t(V)). Required when T_regularization="low_rank". (Default: NULL)
+#' @return A list containing W_RNA, H_RNA, H_Sym, T, RecError, RelChange. When T_regularization="low_rank", also T_factors (list with U and V).
 #' @examples
 #' X_RNA <- matrix(runif(20*30), nrow=20, ncol=30)
 #' S <- matrix(runif(15*15), nrow=15, ncol=15)
@@ -74,8 +85,8 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     init_W_RNA=NULL, init_H_RNA=NULL, init_H_Sym=NULL,
     nmf_init_n_restart=1L, nmf_init_num_iter=30L,
     nmf_init_algorithm="Frobenius",
-    T_regularization=c("none", "frobenius_unit", "l2"),
-    lambda_T=0){
+    T_regularization=c("none", "frobenius_unit", "l2", "low_rank"),
+    lambda_T=0, T_rank=NULL){
     # Argument Check
     init <- match.arg(init)
     T_regularization <- match.arg(T_regularization)
@@ -88,11 +99,12 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
         J, Beta, root, thr, viz, figdir, num.iter, verbose,
         init_W_RNA, init_H_RNA, init_H_Sym,
         nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-        T_regularization, lambda_T)
+        T_regularization, lambda_T, T_rank)
     # Initialization
     int <- .initMachima2(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
         init_W_RNA, init_H_RNA, init_H_Sym,
-        nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm)
+        nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
+        T_regularization, T_rank)
     X_RNA <- int$X_RNA
     X_Epi <- int$X_Epi
     W_RNA <- int$W_RNA
@@ -103,6 +115,10 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     Pi_Epi <- int$Pi_Epi
     RecError <- int$RecError
     RelChange <- int$RelChange
+    if(T_regularization == "low_rank"){
+        U <- int$U
+        V <- int$V
+    }
     # Before Update
     if(viz && !is.null(figdir)){
         png(filename = paste0(figdir, "/0.png"),
@@ -151,14 +167,24 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
             }
             # Step2: Update T
             if(!fixT){
-                effective_L2_T <- L2_T
-                if(T_regularization == "l2") effective_L2_T <- effective_L2_T + lambda_T
-                T <- .updateT2(W_RNA, X_Epi, H_Sym, T, Beta, L1_T, effective_L2_T, orthT, root)
-                # Frobenius unit normalization: fix T scale, absorb magnitude into H_Sym
-                if(T_regularization == "frobenius_unit"){
-                    frob <- .frobNormT(T)
-                    T <- .rescaleT(T, frob)
-                    H_Sym <- H_Sym * frob$mean_norm_sq
+                if(T_regularization == "low_rank"){
+                    uv <- .updateT2_lowrank(W_RNA, X_Epi, H_Sym, U, V, Beta, L1_T, L2_T, root)
+                    U <- uv$U
+                    V <- uv$V
+                    if(is.matrix(X_Epi)){
+                        T <- U %*% t(V)
+                    }else{
+                        T <- lapply(seq_along(U), function(k) U[[k]] %*% t(V[[k]]))
+                    }
+                }else{
+                    effective_L2_T <- L2_T
+                    if(T_regularization == "l2") effective_L2_T <- effective_L2_T + lambda_T
+                    T <- .updateT2(W_RNA, X_Epi, H_Sym, T, Beta, L1_T, effective_L2_T, orthT, root)
+                    if(T_regularization == "frobenius_unit"){
+                        frob <- .frobNormT(T)
+                        T <- .rescaleT(T, frob)
+                        H_Sym <- H_Sym * frob$scalar_sq
+                    }
                 }
             }
             # Step3: Update W_RNA
@@ -201,6 +227,10 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
         H_Sym <- asn$H_Sym
     }
     # Output
-    list(W_RNA=W_RNA, H_RNA=H_RNA, H_Sym=H_Sym,
+    out <- list(W_RNA=W_RNA, H_RNA=H_RNA, H_Sym=H_Sym,
         T=T, RecError=RecError, RelChange=RelChange)
+    if(T_regularization == "low_rank"){
+        out$T_factors <- list(U=U, V=V)
+    }
+    out
 }

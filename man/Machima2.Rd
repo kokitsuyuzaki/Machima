@@ -43,8 +43,9 @@ Machima2(
   nmf_init_n_restart = 1L,
   nmf_init_num_iter = 30L,
   nmf_init_algorithm = "Frobenius",
-  T_regularization = c("none", "frobenius_unit", "l2"),
-  lambda_T = 0
+  T_regularization = c("none", "frobenius_unit", "l2", "low_rank"),
+  lambda_T = 0,
+  T_rank = NULL
 )
 }
 \arguments{
@@ -124,18 +125,30 @@ Machima2(
 
 \item{nmf_init_algorithm}{NMF algorithm for init (Default: "Frobenius")}
 
-\item{T_regularization}{Regularization strategy for T to prevent H_Sym collapse: "none", "frobenius_unit" (per-iteration normalization), or "l2" (penalty). Ignored when fixT=TRUE. (Default: "none")}
+\item{T_regularization}{Regularization strategy for T: "none", "frobenius_unit", "l2", or "low_rank". Ignored when fixT=TRUE. (Default: "none")}
 
 \item{lambda_T}{L2 penalty strength for T when T_regularization="l2" (Default: 0)}
+
+\item{T_rank}{Rank of low-rank T parametrization (T=U*t(V)). Required when T_regularization="low_rank". (Default: NULL)}
 }
 \value{
-A list containing W_RNA, H_RNA, H_Sym, T, RecError, RelChange
+A list containing W_RNA, H_RNA, H_Sym, T, RecError, RelChange. When T_regularization="low_rank", also T_factors (list with U and V).
 }
 \description{
 For symmetric epigenomic matrices (e.g., similarity/correlation matrices).
 X_RNA (n x m) is decomposed as W_RNA (n x J) * H_RNA (J x m).
 X_Epi (l x l, symmetric) is decomposed as G * H_Sym * t(G),
 where G = T * W_RNA (l x J) and H_Sym is J x J symmetric non-negative.
+}
+\details{
+When \code{label} is supplied, dimnames of \code{H_Sym} and rownames of
+\code{H_RNA} are assigned by correlating each component's H_RNA row with
+per-cluster average expression, then solving a max-weight bipartite matching
+(via \code{igraph::max_bipartite_match}). Components that remain unmatched
+(e.g. when J > number of clusters) are labeled \code{"comp_j"} instead of NA.
+Such components often act as background-absorbing factors that capture the
+bulk variance of X_Epi; their H_Sym diagonal entry is typically the largest.
+Downstream analyses may drop or baseline-correct \code{"comp_*"} entries.
 }
 \examples{
 X_RNA <- matrix(runif(20*30), nrow=20, ncol=30)

@@ -1,22 +1,24 @@
+VERSION 1.1.0
+------------------------
+   o Added T_regularization = "low_rank" (T = U * t(V))
+     to structurally bound T capacity and prevent H_Sym collapse
+   o Fixed frobenius_unit list-mode crash: use single global RMS
+     scalar instead of per-chrom scalars, with eps guard
+   o Documented dimnames assignment algorithm in @details
+     (background-absorbing "comp_*" components)
+
 VERSION 1.0.0
 ------------------------
-   o Added T_regularization param to Machima2()
-     ("frobenius_unit", "l2") to prevent H_Sym collapse
-     when T is a free dense matrix
-   o Fixed NA in dimnames of H_Sym/H_RNA when J > num_celltypes
-     (falls back to "comp_j")
-
-VERSION 0.99.1
-------------------------
    o Added Machima2() for symmetric epigenomic matrices
+     (X_Epi ~ G * H_Sym * t(G), where G = T * W_RNA)
    o Added init_W_RNA/init_H_RNA/init_H_Sym, fixH_Sym to Machima2()
+   o Added T_regularization ("frobenius_unit", "l2") to Machima2()
    o Added nmf_init_n_restart/num_iter/algorithm params
    o Exported Mat2List()
+   o Fixed NA in dimnames when J > num_celltypes
    o Fixed BetaDivergence formula (operator precedence + X/Y swap)
    o Fixed L1_W_RNA unused in W_RNA updates
    o Fixed horizontal mode RecError mismatch
-   o Removed dead code in orthogonal H_RNA update
-   o Extracted shared .estimateCelltypes()
 
 VERSION 0.99.0
 ------------------------

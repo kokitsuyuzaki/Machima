@@ -1,20 +1,24 @@
 # --- T Frobenius normalization helpers ---
+# Uses a single global scalar (RMS of per-chrom norms) in list mode
+# to preserve reconstruction exactly for all chromosomes.
 
 .frobNormT <- function(T){
+    eps <- sqrt(.Machine$double.eps)
     if(is.matrix(T)){
-        nrm <- norm(T, "F")
-        list(norms = nrm, mean_norm_sq = nrm^2)
+        scalar <- max(norm(T, "F"), eps)
+        list(scalar = scalar, scalar_sq = scalar^2)
     }else{
         norms <- sapply(T, function(t) norm(t, "F"))
-        list(norms = norms, mean_norm_sq = mean(norms)^2)
+        scalar <- max(sqrt(mean(norms^2)), eps)
+        list(scalar = scalar, scalar_sq = scalar^2)
     }
 }
 
 .rescaleT <- function(T, frob){
     if(is.matrix(T)){
-        T / frob$norms
+        T / frob$scalar
     }else{
-        lapply(seq_along(T), function(x) T[[x]] / frob$norms[x])
+        lapply(T, function(t) t / frob$scalar)
     }
 }
 
@@ -48,7 +52,6 @@
 }
 
 # --- Reconstruction errors for horizontal mode ---
-# Epi term uses D_beta(X_GAM, W*H_Sym*Wt) instead of D_beta(X_Epi, G*H_Sym*Gt)
 
 .recErrors2_HZL <- function(X_RNA, W_RNA, H_RNA, X_GAM, H_Sym, Beta, Pi_RNA, Pi_Epi){
     if(is.matrix(X_RNA)){
@@ -76,7 +79,6 @@
 }
 
 # --- X_GAM for horizontal mode ---
-# X_GAM = t(T) %*% X_Epi %*% T (bilinear transform, n x n, symmetric)
 
 .updateGAM2_HZL <- function(X_Epi, T){
     if(is.matrix(X_Epi)){
