@@ -25,12 +25,17 @@
             if(length(target) != 0){
                 paste0(names(related.component)[target], collapse="|")
             }else{
-                NA
+                paste0("comp_", x)
             }
         }))
     }else{
         g <- graph_from_incidence_matrix(cor.matrix, weighted=TRUE)
         estimated.celltypes <- as.vector(max_bipartite_match(g)$matching[components])
+    }
+    # Replace any remaining NA with fallback labels
+    na_idx <- which(is.na(estimated.celltypes))
+    if(length(na_idx) > 0){
+        estimated.celltypes[na_idx] <- paste0("comp_", na_idx)
     }
     estimated.celltypes
 }

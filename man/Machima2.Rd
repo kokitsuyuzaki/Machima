@@ -42,7 +42,9 @@ Machima2(
   init_H_Sym = NULL,
   nmf_init_n_restart = 1L,
   nmf_init_num_iter = 30L,
-  nmf_init_algorithm = "Frobenius"
+  nmf_init_algorithm = "Frobenius",
+  T_regularization = c("none", "frobenius_unit", "l2"),
+  lambda_T = 0
 )
 }
 \arguments{
@@ -121,6 +123,10 @@ Machima2(
 \item{nmf_init_num_iter}{Number of NMF iterations for init (Default: 30)}
 
 \item{nmf_init_algorithm}{NMF algorithm for init (Default: "Frobenius")}
+
+\item{T_regularization}{Regularization strategy for T to prevent H_Sym collapse: "none", "frobenius_unit" (per-iteration normalization), or "l2" (penalty). Ignored when fixT=TRUE. (Default: "none")}
+
+\item{lambda_T}{L2 penalty strength for T when T_regularization="l2" (Default: 0)}
 }
 \value{
 A list containing W_RNA, H_RNA, H_Sym, T, RecError, RelChange

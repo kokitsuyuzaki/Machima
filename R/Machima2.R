@@ -43,6 +43,8 @@
 #' @param nmf_init_n_restart Number of NMF restarts for init (Default: 1)
 #' @param nmf_init_num_iter Number of NMF iterations for init (Default: 30)
 #' @param nmf_init_algorithm NMF algorithm for init (Default: "Frobenius")
+#' @param T_regularization Regularization strategy for T to prevent H_Sym collapse: "none", "frobenius_unit" (per-iteration normalization), or "l2" (penalty). Ignored when fixT=TRUE. (Default: "none")
+#' @param lambda_T L2 penalty strength for T when T_regularization="l2" (Default: 0)
 #' @return A list containing W_RNA, H_RNA, H_Sym, T, RecError, RelChange
 #' @examples
 #' X_RNA <- matrix(runif(20*30), nrow=20, ncol=30)
@@ -71,9 +73,12 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     num.iter=30, verbose=FALSE,
     init_W_RNA=NULL, init_H_RNA=NULL, init_H_Sym=NULL,
     nmf_init_n_restart=1L, nmf_init_num_iter=30L,
-    nmf_init_algorithm="Frobenius"){
+    nmf_init_algorithm="Frobenius",
+    T_regularization=c("none", "frobenius_unit", "l2"),
+    lambda_T=0){
     # Argument Check
     init <- match.arg(init)
+    T_regularization <- match.arg(T_regularization)
     .checkMachima2(X_RNA, X_Epi, label, T,
         fixW_RNA, fixH_RNA, fixT, fixH_Sym,
         orthW_RNA, orthH_RNA, orthT, orthH_Sym,
@@ -82,7 +87,8 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
         L1_T, L2_T, L1_H_Sym, L2_H_Sym, orderReg, horizontal,
         J, Beta, root, thr, viz, figdir, num.iter, verbose,
         init_W_RNA, init_H_RNA, init_H_Sym,
-        nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm)
+        nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
+        T_regularization, lambda_T)
     # Initialization
     int <- .initMachima2(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
         init_W_RNA, init_H_RNA, init_H_Sym,
@@ -145,7 +151,15 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
             }
             # Step2: Update T
             if(!fixT){
-                T <- .updateT2(W_RNA, X_Epi, H_Sym, T, Beta, L1_T, L2_T, orthT, root)
+                effective_L2_T <- L2_T
+                if(T_regularization == "l2") effective_L2_T <- effective_L2_T + lambda_T
+                T <- .updateT2(W_RNA, X_Epi, H_Sym, T, Beta, L1_T, effective_L2_T, orthT, root)
+                # Frobenius unit normalization: fix T scale, absorb magnitude into H_Sym
+                if(T_regularization == "frobenius_unit"){
+                    frob <- .frobNormT(T)
+                    T <- .rescaleT(T, frob)
+                    H_Sym <- H_Sym * frob$mean_norm_sq
+                }
             }
             # Step3: Update W_RNA
             if(!fixW_RNA){

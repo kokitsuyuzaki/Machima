@@ -1,3 +1,23 @@
+# --- T Frobenius normalization helpers ---
+
+.frobNormT <- function(T){
+    if(is.matrix(T)){
+        nrm <- norm(T, "F")
+        list(norms = nrm, mean_norm_sq = nrm^2)
+    }else{
+        norms <- sapply(T, function(t) norm(t, "F"))
+        list(norms = norms, mean_norm_sq = mean(norms)^2)
+    }
+}
+
+.rescaleT <- function(T, frob){
+    if(is.matrix(T)){
+        T / frob$norms
+    }else{
+        lapply(seq_along(T), function(x) T[[x]] / frob$norms[x])
+    }
+}
+
 # --- Reconstruction errors for symmetric model ---
 
 .recErrors2 <- function(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi){

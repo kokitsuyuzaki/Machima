@@ -1,7 +1,7 @@
 Package: Machima
 Type: Package
 Title: Cross-Omics Cell-Type Deconvolution by Joint Non-Negative Matrix Trifactorization
-Version: 0.99.1
+Version: 1.0.0
 Author: Koki Tsuyuzaki
 Maintainer: Koki Tsuyuzaki <k.t.the-answer@hotmail.co.jp>
 Description: Gene expression matrix and epigenomic feature matrix are decomposed at once by non-negative matrix trifactorization algorithm. Supports both asymmetric (Machima) and symmetric (Machima2) epigenomic matrices. For the details of the method, see the reference section of GitHub README.md <https://github.com/kokitsuyuzaki/Machima>.

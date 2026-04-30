@@ -6,7 +6,8 @@
     L1_T, L2_T, L1_H_Sym, L2_H_Sym, orderReg, horizontal,
     J, Beta, root, thr, viz, figdir, num.iter, verbose,
     init_W_RNA, init_H_RNA, init_H_Sym,
-    nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm){
+    nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
+    T_regularization, lambda_T){
     # Check X_RNA
     check1 <- is.matrix(X_RNA)
     check2 <- is.list(X_RNA)
@@ -222,4 +223,8 @@
     stopifnot(is.numeric(nmf_init_num_iter))
     stopifnot(nmf_init_num_iter >= 1)
     stopifnot(is.character(nmf_init_algorithm))
+    # Check T_regularization
+    stopifnot(T_regularization %in% c("none", "frobenius_unit", "l2"))
+    stopifnot(is.numeric(lambda_T))
+    stopifnot(lambda_T >= 0)
 }
