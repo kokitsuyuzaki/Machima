@@ -31,6 +31,7 @@ Machima(
   L2_H_Epi = 1e-10,
   orderReg = FALSE,
   horizontal = FALSE,
+  lambda_balance = 0.5,
   J = 3,
   Beta = 2,
   root = FALSE,
@@ -86,6 +87,8 @@ Machima(
 \item{orderReg}{Order regularization to sort the column vectors of W_RNA, H_RNA, and H_Epi by the L2 norm in ascending order (Default: FALSE)}
 
 \item{horizontal}{Horizontal-mode, which means normal joint NMF (Default: FALSE)}
+
+\item{lambda_balance}{Balance between X_RNA and X_Epi loss terms: 0=RNA only, 1=Epi only, 0.5=equal (default). (Default: 0.5)}
 
 \item{J}{Rank parameter to decompose (Default: 3)}
 

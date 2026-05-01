@@ -1,17 +1,17 @@
 .initMachima2 <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
     init_W_RNA, init_H_RNA, init_H_Sym,
     nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-    T_regularization, T_rank, H_Sym_structure){
+    T_regularization, T_rank, H_Sym_structure, lambda_balance){
     if(is.matrix(X_RNA) && is.matrix(X_Epi)){
         int <- .initMachima2_Matrix(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
             init_W_RNA, init_H_RNA, init_H_Sym,
             nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-            T_regularization, T_rank, H_Sym_structure)
+            T_regularization, T_rank, H_Sym_structure, lambda_balance)
     }else{
         int <- .initMachima2_List(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
             init_W_RNA, init_H_RNA, init_H_Sym,
             nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-            T_regularization, T_rank, H_Sym_structure)
+            T_regularization, T_rank, H_Sym_structure, lambda_balance)
     }
     int
 }
@@ -24,7 +24,7 @@
 .initMachima2_Matrix <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
     init_W_RNA, init_H_RNA, init_H_Sym,
     nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-    T_regularization, T_rank, H_Sym_structure){
+    T_regularization, T_rank, H_Sym_structure, lambda_balance){
     X_RNA[which(X_RNA == 0)] <- pseudocount
     X_Epi[which(X_Epi == 0)] <- pseudocount
     # Symmetrize after pseudocount
@@ -95,7 +95,7 @@
             warning("init_H_Sym has non-zero off-diagonal entries; ",
                 "projecting to diagonal because H_Sym_structure='diagonal'")
         }
-        H_Sym <- diag(diag(H_Sym))
+        H_Sym <- diag(diag(H_Sym), nrow=J)
     }
     # Low-rank T initialization
     U <- NULL
@@ -112,9 +112,9 @@
         }
         T <- U %*% t(V)
     }
-    # Weight
-    Pi_RNA <- .weight(X_RNA)
-    Pi_Epi <- .weight(X_Epi)
+    # Weight (lambda_balance: 0=RNA only, 0.5=equal, 1=Epi only)
+    Pi_RNA <- 2 * (1 - lambda_balance) * .weight(X_RNA)
+    Pi_Epi <- 2 * lambda_balance * .weight(X_Epi)
     # Error
     RecError <- c()
     RelChange <- c()
@@ -129,7 +129,7 @@
 .initMachima2_List <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
     init_W_RNA, init_H_RNA, init_H_Sym,
     nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-    T_regularization, T_rank, H_Sym_structure){
+    T_regularization, T_rank, H_Sym_structure, lambda_balance){
     X_RNA <- lapply(X_RNA, function(x){
         x[which(x == 0)] <- pseudocount
         x
@@ -215,7 +215,7 @@
             warning("init_H_Sym has non-zero off-diagonal entries; ",
                 "projecting to diagonal because H_Sym_structure='diagonal'")
         }
-        H_Sym <- diag(diag(H_Sym))
+        H_Sym <- diag(diag(H_Sym), nrow=J)
     }
     # Low-rank T initialization
     U <- NULL
@@ -242,9 +242,9 @@
         }
         T <- lapply(seq_along(U), function(k) U[[k]] %*% t(V[[k]]))
     }
-    # Weight
-    Pi_RNA <- lapply(X_RNA, .weight)
-    Pi_Epi <- lapply(X_Epi, .weight)
+    # Weight (lambda_balance: 0=RNA only, 0.5=equal, 1=Epi only)
+    Pi_RNA <- lapply(X_RNA, function(x) 2 * (1 - lambda_balance) * .weight(x))
+    Pi_Epi <- lapply(X_Epi, function(x) 2 * lambda_balance * .weight(x))
     # Error
     RecError <- c()
     RelChange <- c()

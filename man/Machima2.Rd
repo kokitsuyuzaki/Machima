@@ -43,6 +43,7 @@ Machima2(
   nmf_init_n_restart = 1L,
   nmf_init_num_iter = 30L,
   nmf_init_algorithm = "Frobenius",
+  lambda_balance = 0.5,
   T_regularization = c("none", "frobenius_unit", "l2", "low_rank"),
   lambda_T = 0,
   T_rank = NULL,
@@ -125,6 +126,8 @@ Machima2(
 \item{nmf_init_num_iter}{Number of NMF iterations for init (Default: 30)}
 
 \item{nmf_init_algorithm}{NMF algorithm for init (Default: "Frobenius")}
+
+\item{lambda_balance}{Balance between X_RNA and X_Epi loss terms: 0=RNA only, 1=Epi only, 0.5=equal (default; matches pre-1.3.0). (Default: 0.5)}
 
 \item{T_regularization}{Regularization strategy for T: "none", "frobenius_unit", "l2", or "low_rank". Ignored when fixT=TRUE. (Default: "none")}
 

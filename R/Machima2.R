@@ -66,6 +66,7 @@
 #' @param nmf_init_n_restart Number of NMF restarts for init (Default: 1)
 #' @param nmf_init_num_iter Number of NMF iterations for init (Default: 30)
 #' @param nmf_init_algorithm NMF algorithm for init (Default: "Frobenius")
+#' @param lambda_balance Balance between X_RNA and X_Epi loss terms: 0=RNA only, 1=Epi only, 0.5=equal (default; matches pre-1.3.0). (Default: 0.5)
 #' @param T_regularization Regularization strategy for T: "none", "frobenius_unit", "l2", or "low_rank". Ignored when fixT=TRUE. (Default: "none")
 #' @param lambda_T L2 penalty strength for T when T_regularization="l2" (Default: 0)
 #' @param T_rank Rank of low-rank T parametrization (T=U*t(V)). Required when T_regularization="low_rank". (Default: NULL)
@@ -99,6 +100,7 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     init_W_RNA=NULL, init_H_RNA=NULL, init_H_Sym=NULL,
     nmf_init_n_restart=1L, nmf_init_num_iter=30L,
     nmf_init_algorithm="Frobenius",
+    lambda_balance=0.5,
     T_regularization=c("none", "frobenius_unit", "l2", "low_rank"),
     lambda_T=0, T_rank=NULL,
     H_Sym_structure=c("symmetric", "diagonal")){
@@ -115,12 +117,13 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
         J, Beta, root, thr, viz, figdir, num.iter, verbose,
         init_W_RNA, init_H_RNA, init_H_Sym,
         nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-        T_regularization, lambda_T, T_rank, H_Sym_structure)
+        T_regularization, lambda_T, T_rank, H_Sym_structure,
+        lambda_balance)
     # Initialization
     int <- .initMachima2(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
         init_W_RNA, init_H_RNA, init_H_Sym,
         nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-        T_regularization, T_rank, H_Sym_structure)
+        T_regularization, T_rank, H_Sym_structure, lambda_balance)
     X_RNA <- int$X_RNA
     X_Epi <- int$X_Epi
     W_RNA <- int$W_RNA
@@ -161,9 +164,16 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
         if(horizontal){
             # Update1: H_Sym
             if(!fixH_Sym){
-                H_Sym <- .updateH_Sym_HZL(X_GAM, W_RNA, H_Sym, J, Beta,
-                    L1_H_Sym, L2_H_Sym, orderReg, orthH_Sym, root, Pi_RNA, Pi_Epi)
-                if(H_Sym_structure == "diagonal") H_Sym <- diag(diag(H_Sym))
+                if(H_Sym_structure == "diagonal"){
+                    h <- .updateH_Sym_diag_HZL(X_GAM, W_RNA, diag(H_Sym), J, Beta,
+                        L1_H_Sym, L2_H_Sym, orderReg, root, Pi_Epi)
+                    dn <- dimnames(H_Sym)
+                    H_Sym <- diag(h, nrow=J)
+                    dimnames(H_Sym) <- dn
+                }else{
+                    H_Sym <- .updateH_Sym_HZL(X_GAM, W_RNA, H_Sym, J, Beta,
+                        L1_H_Sym, L2_H_Sym, orderReg, orthH_Sym, root, Pi_RNA, Pi_Epi)
+                }
             }
             # Update2: W_RNA
             if(!fixW_RNA){
@@ -179,9 +189,16 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
         }else{
             # Step1: Update H_Sym
             if(!fixH_Sym){
-                H_Sym <- .updateH_Sym(X_Epi, W_RNA, H_Sym, T, J, Beta,
-                    L1_H_Sym, L2_H_Sym, orderReg, orthH_Sym, root, Pi_RNA, Pi_Epi)
-                if(H_Sym_structure == "diagonal") H_Sym <- diag(diag(H_Sym))
+                if(H_Sym_structure == "diagonal"){
+                    h <- .updateH_Sym_diag(X_Epi, W_RNA, diag(H_Sym), T, J, Beta,
+                        L1_H_Sym, L2_H_Sym, orderReg, root, Pi_Epi)
+                    dn <- dimnames(H_Sym)
+                    H_Sym <- diag(h, nrow=J)
+                    dimnames(H_Sym) <- dn
+                }else{
+                    H_Sym <- .updateH_Sym(X_Epi, W_RNA, H_Sym, T, J, Beta,
+                        L1_H_Sym, L2_H_Sym, orderReg, orthH_Sym, root, Pi_RNA, Pi_Epi)
+                }
             }
             # Step2: Update T
             if(!fixT){

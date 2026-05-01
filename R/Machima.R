@@ -24,6 +24,7 @@
 #' @param L1_H_Epi Parameter for L1-norm regularization of H_Epi (Default: 1e-10)
 #' @param L2_H_Epi Parameter for L2-norm regularization of H_Epi (Default: 1e-10)
 #' @param orderReg Order regularization to sort the column vectors of W_RNA, H_RNA, and H_Epi by the L2 norm in ascending order (Default: FALSE)
+#' @param lambda_balance Balance between X_RNA and X_Epi loss terms: 0=RNA only, 1=Epi only, 0.5=equal (default). (Default: 0.5)
 #' @param horizontal Horizontal-mode, which means normal joint NMF (Default: FALSE)
 #' @param J Rank parameter to decompose (Default: 3)
 #' @param Beta Parameter of Beta-divergence (Default: 2)
@@ -54,7 +55,7 @@ Machima <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     L1_H_RNA=1e-10, L2_H_RNA=1e-10,
     L1_T=1e-10, L2_T=1e-10,
     L1_H_Epi=1e-10, L2_H_Epi=1e-10,
-    orderReg=FALSE, horizontal=FALSE,
+    orderReg=FALSE, horizontal=FALSE, lambda_balance=0.5,
     J=3, Beta=2, root=FALSE, thr=1e-10, viz=FALSE, figdir=NULL,
     init = c("RandomEpi", "RandomRNA", "Random", "NMFAlign", "NMFAlign2"),
     num.iter=30, verbose=FALSE){
@@ -66,9 +67,10 @@ Machima <- function(X_RNA, X_Epi, label=NULL, T=NULL,
         pseudocount,
         L1_W_RNA, L2_W_RNA, L1_H_RNA, L2_H_RNA,
         L1_T, L2_T, L1_H_Epi, L2_H_Epi, orderReg, horizontal,
-        J, Beta, root, thr, viz, figdir, num.iter, verbose)
+        J, Beta, root, thr, viz, figdir, num.iter, verbose, lambda_balance)
     # Initialization
-    int <- .initMachima(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr)
+    int <- .initMachima(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
+        lambda_balance)
     X_RNA <- int$X_RNA
     X_Epi <- int$X_Epi
     W_RNA <- int$W_RNA

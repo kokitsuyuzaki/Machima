@@ -1,13 +1,14 @@
-.initMachima <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr){
+.initMachima <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
+    lambda_balance=0.5){
     if(is.matrix(X_RNA) && is.matrix(X_Epi)){
-        int <- .initMachima_Matrix(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr)
+        int <- .initMachima_Matrix(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr, lambda_balance)
     }else{
-        int <- .initMachima_List(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr)
+        int <- .initMachima_List(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr, lambda_balance)
     }
     int
 }
 
-.initMachima_Matrix <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr){
+.initMachima_Matrix <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr, lambda_balance=0.5){
     X_RNA[which(X_RNA == 0)] <- pseudocount
     X_Epi[which(X_Epi == 0)] <- pseudocount
     if(init == "RandomEpi"){
@@ -119,8 +120,8 @@
         }
     }
     # Weight
-    Pi_RNA <- .weight(X_RNA)
-    Pi_Epi <- .weight(X_Epi)
+    Pi_RNA <- 2 * (1 - lambda_balance) * .weight(X_RNA)
+    Pi_Epi <- 2 * lambda_balance * .weight(X_Epi)
     # Error
     RecError <- c()
     RelChange <- c()
@@ -132,7 +133,7 @@
         RecError=RecError, RelChange=RelChange)
 }
 
-.initMachima_List <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr){
+.initMachima_List <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr, lambda_balance=0.5){
     X_RNA <- lapply(X_RNA, function(x){
         x[which(x == 0)] <- pseudocount
         x
@@ -218,8 +219,8 @@
         }
     }
     # Weight
-    Pi_RNA <- lapply(X_RNA, .weight)
-    Pi_Epi <- lapply(X_Epi, .weight)
+    Pi_RNA <- lapply(X_RNA, function(x) 2 * (1 - lambda_balance) * .weight(x))
+    Pi_Epi <- lapply(X_Epi, function(x) 2 * lambda_balance * .weight(x))
     # Error
     RecError <- c()
     RelChange <- c()

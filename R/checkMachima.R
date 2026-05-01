@@ -4,7 +4,7 @@
     pseudocount,
     L1_W_RNA, L2_W_RNA, L1_H_RNA, L2_H_RNA,
     L1_T, L2_T, L1_H_Epi, L2_H_Epi, orderReg, horizontal,
-    J, Beta, root, thr, viz, figdir, num.iter, verbose){
+    J, Beta, root, thr, viz, figdir, num.iter, verbose, lambda_balance){
     # Check X_RNA
     check1 <- is.matrix(X_RNA)
     check2 <- is.list(X_RNA)
@@ -134,4 +134,9 @@
     stopifnot(num.iter >= 0)
     # Check verbose
     stopifnot(is.logical(verbose))
+    # Check lambda_balance
+    stopifnot(is.numeric(lambda_balance))
+    stopifnot(length(lambda_balance) == 1)
+    stopifnot(lambda_balance >= 0)
+    stopifnot(lambda_balance <= 1)
 }
