@@ -71,8 +71,11 @@
 #' @param T_regularization Regularization strategy for T: "none", "frobenius_unit", "l2", or "low_rank". Ignored when fixT=TRUE. (Default: "none")
 #' @param lambda_T L2 penalty strength for T when T_regularization="l2" (Default: 0)
 #' @param T_rank Rank of low-rank T parametrization (T=U*t(V)). Required when T_regularization="low_rank". (Default: NULL)
+#' @param J_hic_only Number of Hi-C-only basis columns. When >0, Hi-C reconstruction becomes G_full*H_full*G_full^T with hic-only columns independent of W_RNA. (Default: 0)
+#' @param W_hic_init Optional list of initial W_hic matrices (each l_k x J_hic_only). (Default: NULL)
+#' @param fixW_hic If TRUE, do not update W_hic. (Default: FALSE)
 #' @param H_Sym_structure Constrain H_Sym to "symmetric" (default; full J(J+1)/2 parameters; symmetric Tucker) or "diagonal" (J diagonal entries only; symmetric CP / sym-PARAFAC). The diagonal option is recommended for cell-type deconvolution of bulk Hi-C. (Default: "symmetric")
-#' @return A list containing W_RNA, H_RNA, H_Sym, T, RecError, RelChange. When T_regularization="low_rank", also T_factors (list with U and V).
+#' @return A list containing W_RNA, H_RNA, H_Sym, T, RecError, RelChange. When T_regularization="low_rank", also T_factors. When J_hic_only>0, also W_hic and h_hic.
 #' @examples
 #' X_RNA <- matrix(runif(20*30), nrow=20, ncol=30)
 #' S <- matrix(runif(15*15), nrow=15, ncol=15)
@@ -105,7 +108,8 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     lambda_balance=0.5,
     T_regularization=c("none", "frobenius_unit", "l2", "low_rank"),
     lambda_T=0, T_rank=NULL,
-    H_Sym_structure=c("symmetric", "diagonal")){
+    H_Sym_structure=c("symmetric", "diagonal"),
+    J_hic_only=0L, W_hic_init=NULL, fixW_hic=FALSE){
     # Argument Check
     init <- match.arg(init)
     T_regularization <- match.arg(T_regularization)
@@ -125,12 +129,13 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
         init_W_RNA, init_H_RNA, init_H_Sym,
         nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
         T_regularization, lambda_T, T_rank, H_Sym_structure,
-        lambda_balance)
+        lambda_balance, J_hic_only, W_hic_init, fixW_hic)
     # Initialization
     int <- .initMachima2(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
         init_W_RNA, init_H_RNA, init_H_Sym,
         nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-        T_regularization, T_rank, H_Sym_structure, lambda_balance)
+        T_regularization, T_rank, H_Sym_structure, lambda_balance,
+        J_hic_only, W_hic_init)
     X_RNA <- int$X_RNA
     X_Epi <- int$X_Epi
     W_RNA <- int$W_RNA
@@ -145,6 +150,8 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
         U <- int$U
         V <- int$V
     }
+    W_hic <- int$W_hic
+    h_hic <- int$h_hic
     # Before Update
     if(viz && !is.null(figdir)){
         png(filename = paste0(figdir, "/0.png"),
@@ -165,7 +172,7 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
         if(horizontal){
             pre_Error <- .recErrors2_HZL(X_RNA, W_RNA, H_RNA, X_GAM, H_Sym, Beta, Pi_RNA, Pi_Epi)
         }else{
-            pre_Error <- .recErrors2(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi)
+            pre_Error <- .recErrors2(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi, W_hic, h_hic)
         }
         # Horizontal Mode
         if(horizontal){
@@ -198,19 +205,22 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
             if(!fixH_Sym){
                 if(H_Sym_structure == "diagonal"){
                     h <- .updateH_Sym_diag(X_Epi, W_RNA, diag(H_Sym), T, J, Beta,
-                        L1_H_Sym, L2_H_Sym, orderReg, root, Pi_Epi)
+                        L1_H_Sym, L2_H_Sym, orderReg, root, Pi_Epi,
+                        W_hic=W_hic, h_hic=h_hic)
                     dn <- dimnames(H_Sym)
                     H_Sym <- diag(h, nrow=J)
                     dimnames(H_Sym) <- dn
                 }else{
                     H_Sym <- .updateH_Sym(X_Epi, W_RNA, H_Sym, T, J, Beta,
-                        L1_H_Sym, L2_H_Sym, orderReg, orthH_Sym, root, Pi_RNA, Pi_Epi)
+                        L1_H_Sym, L2_H_Sym, orderReg, orthH_Sym, root, Pi_RNA, Pi_Epi,
+                        W_hic=W_hic, h_hic=h_hic)
                 }
             }
             # Step2: Update T
             if(!fixT){
                 if(T_regularization == "low_rank"){
-                    uv <- .updateT2_lowrank(W_RNA, X_Epi, H_Sym, U, V, Beta, L1_T, L2_T, root)
+                    uv <- .updateT2_lowrank(W_RNA, X_Epi, H_Sym, U, V, Beta, L1_T, L2_T, root,
+                        W_hic=W_hic, h_hic=h_hic)
                     U <- uv$U
                     V <- uv$V
                     if(is.matrix(X_Epi)){
@@ -221,7 +231,8 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
                 }else{
                     effective_L2_T <- L2_T
                     if(T_regularization == "l2") effective_L2_T <- effective_L2_T + lambda_T
-                    T <- .updateT2(W_RNA, X_Epi, H_Sym, T, Beta, L1_T, effective_L2_T, orthT, root)
+                    T <- .updateT2(W_RNA, X_Epi, H_Sym, T, Beta, L1_T, effective_L2_T, orthT, root,
+                        W_hic=W_hic, h_hic=h_hic)
                     if(T_regularization == "frobenius_unit"){
                         frob <- .frobNormT(T)
                         T <- .rescaleT(T, frob)
@@ -232,12 +243,22 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
             # Step3: Update W_RNA
             if(!fixW_RNA){
                 W_RNA <- .updateW_RNA2(X_RNA, X_Epi, W_RNA, H_RNA, H_Sym, T, J, Beta,
-                    L1_W_RNA, L2_W_RNA, orderReg, lambda_orthW, root, Pi_RNA, Pi_Epi)
+                    L1_W_RNA, L2_W_RNA, orderReg, lambda_orthW, root, Pi_RNA, Pi_Epi,
+                    W_hic=W_hic, h_hic=h_hic)
             }
             # Step4: Update H_RNA
             if(!fixH_RNA){
                 H_RNA <- .updateH_RNA(X_RNA, W_RNA, H_RNA, J, Beta,
                     L1_H_RNA, L2_H_RNA, orderReg, orthH_RNA, root, Pi_RNA, Pi_Epi)
+            }
+            # Step5: Update hic-only factors
+            if(J_hic_only > 0L){
+                h_hic <- .updateH_hic(X_Epi, W_RNA, W_hic, H_Sym, T, h_hic, Beta,
+                    L1_H_Sym, L2_H_Sym, root, Pi_Epi)
+                if(!fixW_hic){
+                    W_hic <- .updateW_hic(X_Epi, W_RNA, W_hic, H_Sym, T, h_hic, Beta,
+                        L1_W_RNA, L2_W_RNA, root, Pi_Epi)
+                }
             }
         }
         # After Update
@@ -248,7 +269,7 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
         if(horizontal){
             RecError[iter] <- .recErrors2_HZL(X_RNA, W_RNA, H_RNA, X_GAM, H_Sym, Beta, Pi_RNA, Pi_Epi)
         }else{
-            RecError[iter] <- .recErrors2(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi)
+            RecError[iter] <- .recErrors2(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi, W_hic, h_hic)
         }
         RelChange[iter] <- abs(pre_Error - RecError[iter]) / RecError[iter]
         if(viz && !is.null(figdir)){
@@ -273,6 +294,10 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
         T=T, RecError=RecError, RelChange=RelChange)
     if(T_regularization == "low_rank"){
         out$T_factors <- list(U=U, V=V)
+    }
+    if(J_hic_only > 0L){
+        out$W_hic <- W_hic
+        out$h_hic <- h_hic
     }
     out
 }

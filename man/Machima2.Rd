@@ -48,7 +48,10 @@ Machima2(
   T_regularization = c("none", "frobenius_unit", "l2", "low_rank"),
   lambda_T = 0,
   T_rank = NULL,
-  H_Sym_structure = c("symmetric", "diagonal")
+  H_Sym_structure = c("symmetric", "diagonal"),
+  J_hic_only = 0L,
+  W_hic_init = NULL,
+  fixW_hic = FALSE
 )
 }
 \arguments{
@@ -139,9 +142,15 @@ Machima2(
 \item{T_rank}{Rank of low-rank T parametrization (T=U*t(V)). Required when T_regularization="low_rank". (Default: NULL)}
 
 \item{H_Sym_structure}{Constrain H_Sym to "symmetric" (default; full J(J+1)/2 parameters; symmetric Tucker) or "diagonal" (J diagonal entries only; symmetric CP / sym-PARAFAC). The diagonal option is recommended for cell-type deconvolution of bulk Hi-C. (Default: "symmetric")}
+
+\item{J_hic_only}{Number of Hi-C-only basis columns. When >0, Hi-C reconstruction becomes G_full*H_full*G_full^T with hic-only columns independent of W_RNA. (Default: 0)}
+
+\item{W_hic_init}{Optional list of initial W_hic matrices (each l_k x J_hic_only). (Default: NULL)}
+
+\item{fixW_hic}{If TRUE, do not update W_hic. (Default: FALSE)}
 }
 \value{
-A list containing W_RNA, H_RNA, H_Sym, T, RecError, RelChange. When T_regularization="low_rank", also T_factors (list with U and V).
+A list containing W_RNA, H_RNA, H_Sym, T, RecError, RelChange. When T_regularization="low_rank", also T_factors. When J_hic_only>0, also W_hic and h_hic.
 }
 \description{
 For symmetric epigenomic matrices (e.g., similarity/correlation matrices).

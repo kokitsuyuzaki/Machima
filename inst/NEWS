@@ -1,3 +1,11 @@
+VERSION 1.5.0
+------------------------
+   o Added J_hic_only parameter to Machima2() for Hi-C-only basis
+     columns (W_hic). Hi-C reconstruction becomes
+     G_shared*H_Sym*G_shared^T + W_hic*diag(h_hic)*W_hic^T.
+     Default J_hic_only=0 reproduces v1.4.x exactly.
+   o Added W_hic_init and fixW_hic arguments.
+
 VERSION 1.4.0
 ------------------------
    o Added lambda_orthW in [0, 1] to Machima() and Machima2() for

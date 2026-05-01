@@ -3,18 +3,23 @@
 # dD/dT = dD/dG * t(W_RNA) = 2 * M * G * H_Sym * t(W_RNA)
 # The factor 2 cancels since T only appears in the Epi term.
 
-.updateT2 <- function(W_RNA, X_Epi, H_Sym, T, Beta, L1_T, L2_T, orthT, root){
+.updateT2 <- function(W_RNA, X_Epi, H_Sym, T, Beta, L1_T, L2_T, orthT, root,
+    W_hic=NULL, h_hic=numeric(0)){
     if(is.matrix(X_Epi)){
-        T <- .updateT2_Matrix(W_RNA, X_Epi, H_Sym, T, Beta, L1_T, L2_T, orthT, root)
+        T <- .updateT2_Matrix(W_RNA, X_Epi, H_Sym, T, Beta, L1_T, L2_T, orthT, root,
+            W_hic_k=W_hic, h_hic=h_hic)
     }else{
-        T <- .updateT2_List(W_RNA, X_Epi, H_Sym, T, Beta, L1_T, L2_T, orthT, root)
+        T <- .updateT2_List(W_RNA, X_Epi, H_Sym, T, Beta, L1_T, L2_T, orthT, root,
+            W_hic=W_hic, h_hic=h_hic)
     }
     T
 }
 
-.updateT2_Matrix <- function(W_RNA, X_Epi, H_Sym, T, Beta, L1_T, L2_T, orthT, root){
+.updateT2_Matrix <- function(W_RNA, X_Epi, H_Sym, T, Beta, L1_T, L2_T, orthT, root,
+    W_hic_k=NULL, h_hic=numeric(0)){
     G <- T %*% W_RNA
     S_hat <- G %*% H_Sym %*% t(G)
+    S_hat <- .addHic(S_hat, W_hic_k, h_hic)
     HW <- H_Sym %*% t(W_RNA)
     numer <- (S_hat^(Beta - 2) * X_Epi) %*% G %*% HW
     if(orthT){
@@ -25,10 +30,12 @@
     T * (numer / denom)^.rho(Beta, root)
 }
 
-.updateT2_List <- function(W_RNA, X_Epi, H_Sym, T, Beta, L1_T, L2_T, orthT, root){
+.updateT2_List <- function(W_RNA, X_Epi, H_Sym, T, Beta, L1_T, L2_T, orthT, root,
+    W_hic=NULL, h_hic=numeric(0)){
     lapply(seq_along(X_Epi), function(x){
         G <- T[[x]] %*% W_RNA[[x]]
         S_hat <- G %*% H_Sym %*% t(G)
+        S_hat <- .addHic(S_hat, W_hic[[x]], h_hic)
         HW <- H_Sym %*% t(W_RNA[[x]])
         numer <- (S_hat^(Beta - 2) * X_Epi[[x]]) %*% G %*% HW
         if(orthT){

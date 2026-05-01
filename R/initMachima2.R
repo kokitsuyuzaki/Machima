@@ -1,17 +1,20 @@
 .initMachima2 <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
     init_W_RNA, init_H_RNA, init_H_Sym,
     nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-    T_regularization, T_rank, H_Sym_structure, lambda_balance){
+    T_regularization, T_rank, H_Sym_structure, lambda_balance,
+    J_hic_only=0L, W_hic_init=NULL){
     if(is.matrix(X_RNA) && is.matrix(X_Epi)){
         int <- .initMachima2_Matrix(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
             init_W_RNA, init_H_RNA, init_H_Sym,
             nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-            T_regularization, T_rank, H_Sym_structure, lambda_balance)
+            T_regularization, T_rank, H_Sym_structure, lambda_balance,
+            J_hic_only, W_hic_init)
     }else{
         int <- .initMachima2_List(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
             init_W_RNA, init_H_RNA, init_H_Sym,
             nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-            T_regularization, T_rank, H_Sym_structure, lambda_balance)
+            T_regularization, T_rank, H_Sym_structure, lambda_balance,
+            J_hic_only, W_hic_init)
     }
     int
 }
@@ -24,7 +27,8 @@
 .initMachima2_Matrix <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
     init_W_RNA, init_H_RNA, init_H_Sym,
     nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-    T_regularization, T_rank, H_Sym_structure, lambda_balance){
+    T_regularization, T_rank, H_Sym_structure, lambda_balance,
+    J_hic_only=0L, W_hic_init=NULL){
     X_RNA[which(X_RNA == 0)] <- pseudocount
     X_Epi[which(X_Epi == 0)] <- pseudocount
     # Symmetrize after pseudocount
@@ -112,6 +116,17 @@
         }
         T <- U %*% t(V)
     }
+    # Hi-C-only basis initialization
+    W_hic <- NULL
+    h_hic <- numeric(0)
+    if(J_hic_only > 0L){
+        if(!is.null(W_hic_init)){
+            W_hic <- W_hic_init
+        }else{
+            W_hic <- matrix(runif(nrow(X_Epi) * J_hic_only, 0.1, 1.0), nrow(X_Epi), J_hic_only)
+        }
+        h_hic <- rep(1, J_hic_only)
+    }
     # Weight (lambda_balance: 0=RNA only, 0.5=equal, 1=Epi only)
     Pi_RNA <- 2 * (1 - lambda_balance) * .weight(X_RNA)
     Pi_Epi <- 2 * lambda_balance * .weight(X_Epi)
@@ -122,14 +137,16 @@
     RelChange[1] <- thr * 10
     list(X_RNA=X_RNA, X_Epi=X_Epi,
         W_RNA=W_RNA, H_RNA=H_RNA, H_Sym=H_Sym,
-        T=T, U=U, V=V, Pi_RNA=Pi_RNA, Pi_Epi=Pi_Epi,
+        T=T, U=U, V=V, W_hic=W_hic, h_hic=h_hic,
+        Pi_RNA=Pi_RNA, Pi_Epi=Pi_Epi,
         RecError=RecError, RelChange=RelChange)
 }
 
 .initMachima2_List <- function(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
     init_W_RNA, init_H_RNA, init_H_Sym,
     nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
-    T_regularization, T_rank, H_Sym_structure, lambda_balance){
+    T_regularization, T_rank, H_Sym_structure, lambda_balance,
+    J_hic_only=0L, W_hic_init=NULL){
     X_RNA <- lapply(X_RNA, function(x){
         x[which(x == 0)] <- pseudocount
         x
@@ -242,6 +259,19 @@
         }
         T <- lapply(seq_along(U), function(k) U[[k]] %*% t(V[[k]]))
     }
+    # Hi-C-only basis initialization (List mode)
+    W_hic <- NULL
+    h_hic <- numeric(0)
+    if(J_hic_only > 0L){
+        if(!is.null(W_hic_init)){
+            W_hic <- W_hic_init
+        }else{
+            W_hic <- lapply(X_Epi, function(x){
+                matrix(runif(nrow(x) * J_hic_only, 0.1, 1.0), nrow(x), J_hic_only)
+            })
+        }
+        h_hic <- rep(1, J_hic_only)
+    }
     # Weight (lambda_balance: 0=RNA only, 0.5=equal, 1=Epi only)
     Pi_RNA <- lapply(X_RNA, function(x) 2 * (1 - lambda_balance) * .weight(x))
     Pi_Epi <- lapply(X_Epi, function(x) 2 * lambda_balance * .weight(x))
@@ -252,6 +282,7 @@
     RelChange[1] <- thr * 10
     list(X_RNA=X_RNA, X_Epi=X_Epi,
         W_RNA=W_RNA, H_RNA=H_RNA, H_Sym=H_Sym,
-        T=T, U=U, V=V, Pi_RNA=Pi_RNA, Pi_Epi=Pi_Epi,
+        T=T, U=U, V=V, W_hic=W_hic, h_hic=h_hic,
+        Pi_RNA=Pi_RNA, Pi_Epi=Pi_Epi,
         RecError=RecError, RelChange=RelChange)
 }

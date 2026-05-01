@@ -24,29 +24,33 @@
 
 # --- Reconstruction errors for symmetric model ---
 
-.recErrors2 <- function(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi){
+.recErrors2 <- function(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi,
+    W_hic=NULL, h_hic=numeric(0)){
     if(is.matrix(X_RNA) && is.matrix(X_Epi)){
-        d_Beta <- .recErrors2_Matrix(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi)
+        d_Beta <- .recErrors2_Matrix(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi, W_hic, h_hic)
     }else{
-        d_Beta <- .recErrors2_List(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi)
+        d_Beta <- .recErrors2_List(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi, W_hic, h_hic)
     }
     d_Beta
 }
 
-.recErrors2_Matrix <- function(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi){
-    G <- T %*% W_RNA
+.recErrors2_Matrix <- function(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi,
+    W_hic=NULL, h_hic=numeric(0)){
     left <- Pi_RNA * .BetaDivergence(X_RNA, W_RNA %*% H_RNA, Beta)
-    right <- Pi_Epi * .BetaDivergence(X_Epi, G %*% H_Sym %*% t(G), Beta)
+    R_epi <- .reconstructEpi_single(W_RNA, T, W_hic, H_Sym, h_hic)
+    right <- Pi_Epi * .BetaDivergence(X_Epi, R_epi, Beta)
     left + right
 }
 
-.recErrors2_List <- function(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi){
+.recErrors2_List <- function(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi,
+    W_hic=NULL, h_hic=numeric(0)){
     lefts <- sum(unlist(lapply(seq_along(X_RNA), function(x){
         Pi_RNA[[x]] * .BetaDivergence(X_RNA[[x]], W_RNA[[x]] %*% H_RNA, Beta)
     })))
     rights <- sum(unlist(lapply(seq_along(X_Epi), function(x){
-        G <- T[[x]] %*% W_RNA[[x]]
-        Pi_Epi[[x]] * .BetaDivergence(X_Epi[[x]], G %*% H_Sym %*% t(G), Beta)
+        W_hic_k <- if(!is.null(W_hic)) W_hic[[x]] else NULL
+        R_epi <- .reconstructEpi_single(W_RNA[[x]], T[[x]], W_hic_k, H_Sym, h_hic)
+        Pi_Epi[[x]] * .BetaDivergence(X_Epi[[x]], R_epi, Beta)
     })))
     lefts + rights
 }

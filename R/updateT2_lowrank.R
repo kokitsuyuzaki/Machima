@@ -3,22 +3,27 @@
 #   dL/dT = S_hat^(b-1) * G * H * Wt - (S_hat^(b-2) * X) * G * H * Wt
 #   dL/dU = dL/dT * V,  dL/dV = t(dL/dT) * U
 
-.updateT2_lowrank <- function(W_RNA, X_Epi, H_Sym, U, V, Beta, L1_T, L2_T, root){
+.updateT2_lowrank <- function(W_RNA, X_Epi, H_Sym, U, V, Beta, L1_T, L2_T, root,
+    W_hic=NULL, h_hic=numeric(0)){
     if(is.matrix(X_Epi)){
         uv <- .updateT2_lowrank_Matrix(W_RNA, X_Epi, H_Sym,
-            U, V, Beta, L1_T, L2_T, root)
+            U, V, Beta, L1_T, L2_T, root,
+            W_hic_k=W_hic, h_hic=h_hic)
     }else{
         uv <- .updateT2_lowrank_List(W_RNA, X_Epi, H_Sym,
-            U, V, Beta, L1_T, L2_T, root)
+            U, V, Beta, L1_T, L2_T, root,
+            W_hic=W_hic, h_hic=h_hic)
     }
     uv
 }
 
 .updateT2_lowrank_Matrix <- function(W_RNA, X_Epi, H_Sym,
-    U, V, Beta, L1_T, L2_T, root){
+    U, V, Beta, L1_T, L2_T, root,
+    W_hic_k=NULL, h_hic=numeric(0)){
     TT <- U %*% t(V)
     G <- TT %*% W_RNA
     S_hat <- G %*% H_Sym %*% t(G)
+    S_hat <- .addHic(S_hat, W_hic_k, h_hic)
     # Shared intermediates (avoid materializing l x n gradient)
     WtV <- t(W_RNA) %*% V                              # J x r
     HWtV <- H_Sym %*% WtV                              # J x r
@@ -31,10 +36,8 @@
     TT <- U %*% t(V)
     G <- TT %*% W_RNA
     S_hat <- G %*% H_Sym %*% t(G)
+    S_hat <- .addHic(S_hat, W_hic_k, h_hic)
     # V update
-    UtSX <- t(U) %*% (S_hat^(Beta - 2) * X_Epi)       # r x l
-    GtUtSX <- t(G) %*% t(UtSX)                         # J x r... no
-    # Direct: numer_V = t(dL_neg/dT) %*% U = W * H * Gt * (S^(b-2)*X) * U
     SbX_U <- (S_hat^(Beta - 2) * X_Epi) %*% U          # l x r
     GtSbXU <- t(G) %*% SbX_U                            # J x r
     numer_V <- W_RNA %*% H_Sym %*% GtSbXU               # n x r
@@ -46,12 +49,14 @@
 }
 
 .updateT2_lowrank_List <- function(W_RNA, X_Epi, H_Sym,
-    U, V, Beta, L1_T, L2_T, root){
+    U, V, Beta, L1_T, L2_T, root,
+    W_hic=NULL, h_hic=numeric(0)){
     K <- length(X_Epi)
     for(k in seq_len(K)){
         TT_k <- U[[k]] %*% t(V[[k]])
         G <- TT_k %*% W_RNA[[k]]
         S_hat <- G %*% H_Sym %*% t(G)
+        S_hat <- .addHic(S_hat, W_hic[[k]], h_hic)
         # U update
         WtV <- t(W_RNA[[k]]) %*% V[[k]]
         HWtV <- H_Sym %*% WtV
@@ -63,6 +68,7 @@
         TT_k <- U[[k]] %*% t(V[[k]])
         G <- TT_k %*% W_RNA[[k]]
         S_hat <- G %*% H_Sym %*% t(G)
+        S_hat <- .addHic(S_hat, W_hic[[k]], h_hic)
         # V update
         SbX_U <- (S_hat^(Beta - 2) * X_Epi[[k]]) %*% U[[k]]
         GtSbXU <- t(G) %*% SbX_U

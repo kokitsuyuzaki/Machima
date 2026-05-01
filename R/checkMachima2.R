@@ -8,7 +8,8 @@
     init_W_RNA, init_H_RNA, init_H_Sym,
     nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
     T_regularization, lambda_T, T_rank, H_Sym_structure,
-    lambda_balance){
+    lambda_balance,
+    J_hic_only, W_hic_init, fixW_hic){
     # Check X_RNA
     check1 <- is.matrix(X_RNA)
     check2 <- is.list(X_RNA)
@@ -279,4 +280,31 @@
     stopifnot(lambda_balance <= 1)
     # Check H_Sym_structure
     stopifnot(H_Sym_structure %in% c("symmetric", "diagonal"))
+    # Check J_hic_only
+    stopifnot(is.numeric(J_hic_only))
+    stopifnot(length(J_hic_only) == 1)
+    stopifnot(as.integer(J_hic_only) >= 0)
+    # Check W_hic_init
+    if(!is.null(W_hic_init)){
+        if(check1){
+            if(!is.matrix(W_hic_init)) stop("W_hic_init must be a matrix when X_RNA is a matrix")
+            if(nrow(W_hic_init) != nrow(X_Epi)) stop("W_hic_init nrow must match nrow(X_Epi)")
+            if(ncol(W_hic_init) != J_hic_only) stop(paste0("W_hic_init ncol must be J_hic_only=", J_hic_only))
+            if(any(W_hic_init < 0)) stop("W_hic_init must be non-negative")
+        }
+        if(check2){
+            if(!is.list(W_hic_init)) stop("W_hic_init must be a list when X_RNA is a list")
+            if(length(W_hic_init) != length(X_Epi)) stop("W_hic_init length must match X_Epi length")
+            lapply(seq_along(W_hic_init), function(k){
+                if(nrow(W_hic_init[[k]]) != nrow(X_Epi[[k]])) stop(paste0("W_hic_init[[",k,"]] nrow mismatch"))
+                if(ncol(W_hic_init[[k]]) != J_hic_only) stop(paste0("W_hic_init[[",k,"]] ncol must be ",J_hic_only))
+                if(any(W_hic_init[[k]] < 0)) stop(paste0("W_hic_init[[",k,"]] must be non-negative"))
+            })
+        }
+    }
+    # Check fixW_hic
+    stopifnot(is.logical(fixW_hic))
+    if(fixW_hic && is.null(W_hic_init) && J_hic_only > 0L){
+        stop("fixW_hic=TRUE requires W_hic_init when J_hic_only > 0")
+    }
 }
