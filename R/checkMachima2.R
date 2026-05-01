@@ -100,6 +100,14 @@
     stopifnot(is.logical(fixH_RNA))
     stopifnot(is.logical(fixT))
     stopifnot(is.logical(fixH_Sym))
+    # Deprecation warning for learned T without regularization
+    if(!fixT && T_regularization == "none" && check6){
+        warning(
+            "Learning T (fixT = FALSE) without T_regularization is not ",
+            "recommended for paired scATAC + Hi-C with shared bin grids. ",
+            "Consider fixT = TRUE (default in v1.2.0+) or ",
+            "T_regularization = \"frobenius_unit\" / \"low_rank\".")
+    }
     # Check Orthogonal
     stopifnot(is.logical(orthW_RNA))
     stopifnot(is.logical(orthH_RNA))

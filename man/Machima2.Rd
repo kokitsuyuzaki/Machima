@@ -11,7 +11,7 @@ Machima2(
   T = NULL,
   fixW_RNA = FALSE,
   fixH_RNA = FALSE,
-  fixT = FALSE,
+  fixT = TRUE,
   fixH_Sym = FALSE,
   orthW_RNA = FALSE,
   orthH_RNA = FALSE,
@@ -62,7 +62,7 @@ Machima2(
 
 \item{fixH_RNA}{Fix value option of H_RNA (Default: FALSE)}
 
-\item{fixT}{Fix value option of T (Default: FALSE)}
+\item{fixT}{If TRUE (default), T is fixed during iteration; when T is also NULL, an identity matrix is auto-constructed per chrom. If FALSE, T is learned as a free dense matrix. For paired scATAC + Hi-C on a shared bin grid, fixT=TRUE is recommended. (Default: TRUE)}
 
 \item{fixH_Sym}{Fix value option of H_Sym (Default: FALSE)}
 
@@ -159,6 +159,12 @@ an independent contact pattern weighted by \code{h_i = H_Sym[i,i]}. This is
 the natural choice when cross-type "interaction" (off-diagonal) is not
 biologically meaningful. The default \code{"symmetric"} mode allows off-diagonal
 entries to capture co-occurrence of contacts between components.
+
+For paired scATAC + Hi-C on the same genomic bin grid, T is naturally
+the identity matrix (the two modalities share the same coordinate axis).
+Learning T as a free matrix introduces a fictitious coordinate
+transformation that degrades both reconstruction quality and cell-type
+discrimination. The v1.2.0 default is therefore \code{fixT = TRUE}.
 }
 \examples{
 X_RNA <- matrix(runif(20*30), nrow=20, ncol=30)

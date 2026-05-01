@@ -22,13 +22,19 @@
 #' biologically meaningful. The default \code{"symmetric"} mode allows off-diagonal
 #' entries to capture co-occurrence of contacts between components.
 #'
+#' For paired scATAC + Hi-C on the same genomic bin grid, T is naturally
+#' the identity matrix (the two modalities share the same coordinate axis).
+#' Learning T as a free matrix introduces a fictitious coordinate
+#' transformation that degrades both reconstruction quality and cell-type
+#' discrimination. The v1.2.0 default is therefore \code{fixT = TRUE}.
+#'
 #' @param X_RNA Single-cell RNA-Seq matrix (n x m) or list of matrices
 #' @param X_Epi Symmetric epigenome matrix (l x l) or list of symmetric matrices
 #' @param label A length-m character vector to specify the cell type within X_RNA (Default: NULL)
 #' @param T Coefficient matrix to connect the dimension of X_RNA and X_Epi (l x n, Default: NULL)
 #' @param fixW_RNA Fix value option of W_RNA (Default: FALSE)
 #' @param fixH_RNA Fix value option of H_RNA (Default: FALSE)
-#' @param fixT Fix value option of T (Default: FALSE)
+#' @param fixT If TRUE (default), T is fixed during iteration; when T is also NULL, an identity matrix is auto-constructed per chrom. If FALSE, T is learned as a free dense matrix. For paired scATAC + Hi-C on a shared bin grid, fixT=TRUE is recommended. (Default: TRUE)
 #' @param fixH_Sym Fix value option of H_Sym (Default: FALSE)
 #' @param orthW_RNA Orthogonal option of W_RNA (Default: FALSE)
 #' @param orthH_RNA Orthogonal option of H_RNA (Default: FALSE)
@@ -79,7 +85,7 @@
 #' }
 #' @export
 Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
-    fixW_RNA=FALSE, fixH_RNA=FALSE, fixT=FALSE, fixH_Sym=FALSE,
+    fixW_RNA=FALSE, fixH_RNA=FALSE, fixT=TRUE, fixH_Sym=FALSE,
     orthW_RNA=FALSE, orthH_RNA=FALSE, orthT=FALSE, orthH_Sym=FALSE,
     pseudocount=.Machine$double.eps,
     L1_W_RNA=1e-10, L2_W_RNA=1e-10,

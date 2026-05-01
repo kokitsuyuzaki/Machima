@@ -40,15 +40,15 @@ expect_true(all(out_fixT$H_Sym == diag(diag(out_fixT$H_Sym))))
 #
 # Compatible with frobenius_unit
 #
-out_frob <- Machima2(X_RNA, X_Epi,
+suppressWarnings(out_frob <- Machima2(X_RNA, X_Epi, fixT=FALSE,
     T_regularization="frobenius_unit",
-    H_Sym_structure="diagonal", J=J, num.iter=10)
+    H_Sym_structure="diagonal", J=J, num.iter=10))
 expect_true(all(out_frob$H_Sym == diag(diag(out_frob$H_Sym))))
 
 #
 # Compatible with low_rank
 #
-out_lr <- Machima2(X_RNA, X_Epi,
+out_lr <- Machima2(X_RNA, X_Epi, fixT=FALSE,
     T_regularization="low_rank", T_rank=5,
     H_Sym_structure="diagonal", J=J, num.iter=10)
 expect_true(all(out_lr$H_Sym == diag(diag(out_lr$H_Sym))))

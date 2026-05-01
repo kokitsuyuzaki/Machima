@@ -14,7 +14,7 @@ J <- 3
 #
 # Basic low_rank run
 #
-out_lr <- Machima2(X_RNA, X_Epi,
+out_lr <- Machima2(X_RNA, X_Epi, fixT=FALSE,
     T_regularization="low_rank", T_rank=5,
     J=J, num.iter=20)
 
@@ -36,7 +36,7 @@ expect_false(any(is.nan(errs)))
 #
 X_RNAs <- list(matrix(runif(20*30), 20, 30), matrix(runif(25*30), 25, 30))
 X_Epis <- list(.makeSymMatrix(15), .makeSymMatrix(18))
-out_lr_list <- Machima2(X_RNAs, X_Epis,
+out_lr_list <- Machima2(X_RNAs, X_Epis, fixT=FALSE,
     T_regularization="low_rank", T_rank=4,
     J=J, num.iter=10)
 

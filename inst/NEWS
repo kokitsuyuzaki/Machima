@@ -1,5 +1,9 @@
 VERSION 1.2.0
 ------------------------
+   o BREAKING: Machima2() default for fixT changed from FALSE to TRUE.
+     Auto-constructs identity T when T=NULL, fixT=TRUE, and l==n.
+     Callers relying on learned T must set fixT=FALSE explicitly.
+   o Added deprecation warning when fixT=FALSE without T_regularization
    o Added H_Sym_structure = c("symmetric", "diagonal") to Machima2()
      for constraining H_Sym to diagonal core (sym-CP / sym-PARAFAC)
 

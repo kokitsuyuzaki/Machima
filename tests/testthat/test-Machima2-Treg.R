@@ -14,9 +14,9 @@ J <- 3
 #
 # frobenius_unit: H_Sym should have meaningful magnitude
 #
-out_fu <- Machima2(X_RNA, X_Epi,
+suppressWarnings(out_fu <- Machima2(X_RNA, X_Epi, fixT=FALSE,
     T_regularization="frobenius_unit",
-    J=J, num.iter=30)
+    J=J, num.iter=30))
 
 expect_true(is.list(out_fu))
 expect_equal(dim(out_fu$H_Sym), c(J, J))
@@ -32,9 +32,9 @@ expect_true(errs[length(errs)] < errs[2])
 #
 # l2: lambda_T penalty
 #
-out_l2 <- Machima2(X_RNA, X_Epi,
+suppressWarnings(out_l2 <- Machima2(X_RNA, X_Epi, fixT=FALSE,
     T_regularization="l2", lambda_T=0.1,
-    J=J, num.iter=30)
+    J=J, num.iter=30))
 
 expect_true(is.list(out_l2))
 expect_true(isSymmetric(out_l2$H_Sym))
@@ -62,9 +62,9 @@ expect_equal(out_fixT$T, T_fixed)
 #
 X_RNAs <- list(matrix(runif(20*30), 20, 30), matrix(runif(25*30), 25, 30))
 X_Epis <- list(.makeSymMatrix(15), .makeSymMatrix(18))
-out_list_fu <- Machima2(X_RNAs, X_Epis,
+suppressWarnings(out_list_fu <- Machima2(X_RNAs, X_Epis, fixT=FALSE,
     T_regularization="frobenius_unit",
-    J=J, num.iter=20)
+    J=J, num.iter=20))
 
 expect_true(is.list(out_list_fu))
 expect_true(isSymmetric(out_list_fu$H_Sym))

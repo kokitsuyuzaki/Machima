@@ -29,6 +29,17 @@
     X_Epi[which(X_Epi == 0)] <- pseudocount
     # Symmetrize after pseudocount
     X_Epi <- (X_Epi + t(X_Epi)) / 2
+    # Auto-construct identity T when fixT=TRUE, T=NULL, and l==n
+    if(fixT && is.null(T)){
+        if(nrow(X_Epi) == nrow(X_RNA)){
+            T <- diag(nrow(X_Epi))
+        }else{
+            # l != n: cannot auto-construct identity, fall back to random
+            nr <- nrow(X_Epi)
+            nc <- nrow(X_RNA)
+            T <- matrix(runif(nr*nc), nrow=nr, ncol=nc)
+        }
+    }
     if(init == "RandomEpi"){
         # NMF with RNA
         out1_1 <- .reArrangeOuts(.returnBestNMF(X_RNA, J=J,
@@ -127,6 +138,21 @@
         x[which(x == 0)] <- pseudocount
         (x + t(x)) / 2
     })
+    # Auto-construct identity T list when fixT=TRUE, T=NULL, and l==n per chrom
+    if(fixT && is.null(T)){
+        all_same <- all(sapply(seq_along(X_Epi), function(k){
+            nrow(X_Epi[[k]]) == nrow(X_RNA[[k]])
+        }))
+        if(all_same){
+            T <- lapply(X_Epi, function(x) diag(nrow(x)))
+        }else{
+            T <- lapply(seq_along(X_Epi), function(k){
+                nr <- nrow(X_Epi[[k]])
+                nc <- nrow(X_RNA[[k]])
+                matrix(runif(nr*nc), nrow=nr, ncol=nc)
+            })
+        }
+    }
     X_RNA2 <- do.call("rbind", X_RNA)
     if(init == "RandomEpi"){
         # NMF with RNA
