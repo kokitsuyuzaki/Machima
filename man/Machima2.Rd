@@ -14,6 +14,7 @@ Machima2(
   fixT = TRUE,
   fixH_Sym = FALSE,
   orthW_RNA = FALSE,
+  lambda_orthW = 0,
   orthH_RNA = FALSE,
   orthT = FALSE,
   orthH_Sym = FALSE,
@@ -67,7 +68,9 @@ Machima2(
 
 \item{fixH_Sym}{Fix value option of H_Sym (Default: FALSE)}
 
-\item{orthW_RNA}{Orthogonal option of W_RNA (Default: FALSE)}
+\item{orthW_RNA}{Deprecated. Use lambda_orthW instead. If TRUE, sets lambda_orthW=1. (Default: FALSE)}
+
+\item{lambda_orthW}{Strength of W_RNA column orthogonality: 0=standard NMF, 1=full orthogonal, intermediate=blend. (Default: 0)}
 
 \item{orthH_RNA}{Orthogonal option of H_RNA (Default: FALSE)}
 

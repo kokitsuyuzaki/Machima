@@ -1,6 +1,6 @@
 .checkMachima <- function(X_RNA, X_Epi, label, T,
     fixW_RNA, fixH_RNA, fixT,
-    orthW_RNA, orthH_RNA, orthT, orthH_Epi,
+    orthW_RNA, lambda_orthW, orthH_RNA, orthT, orthH_Epi,
     pseudocount,
     L1_W_RNA, L2_W_RNA, L1_H_RNA, L2_H_RNA,
     L1_T, L2_T, L1_H_Epi, L2_H_Epi, orderReg, horizontal,
@@ -89,6 +89,10 @@
     stopifnot(is.logical(fixT))
     # Check Orthogonal
     stopifnot(is.logical(orthW_RNA))
+    stopifnot(is.numeric(lambda_orthW))
+    stopifnot(length(lambda_orthW) == 1)
+    stopifnot(lambda_orthW >= 0)
+    stopifnot(lambda_orthW <= 1)
     stopifnot(is.logical(orthH_RNA))
     stopifnot(is.logical(orthT))
     stopifnot(is.logical(orthH_Epi))

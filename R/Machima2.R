@@ -36,7 +36,8 @@
 #' @param fixH_RNA Fix value option of H_RNA (Default: FALSE)
 #' @param fixT If TRUE (default), T is fixed during iteration; when T is also NULL, an identity matrix is auto-constructed per chrom. If FALSE, T is learned as a free dense matrix. For paired scATAC + Hi-C on a shared bin grid, fixT=TRUE is recommended. (Default: TRUE)
 #' @param fixH_Sym Fix value option of H_Sym (Default: FALSE)
-#' @param orthW_RNA Orthogonal option of W_RNA (Default: FALSE)
+#' @param orthW_RNA Deprecated. Use lambda_orthW instead. If TRUE, sets lambda_orthW=1. (Default: FALSE)
+#' @param lambda_orthW Strength of W_RNA column orthogonality: 0=standard NMF, 1=full orthogonal, intermediate=blend. (Default: 0)
 #' @param orthH_RNA Orthogonal option of H_RNA (Default: FALSE)
 #' @param orthT Orthogonal option of T (Default: FALSE)
 #' @param orthH_Sym Orthogonal option of H_Sym (Default: FALSE)
@@ -87,7 +88,8 @@
 #' @export
 Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     fixW_RNA=FALSE, fixH_RNA=FALSE, fixT=TRUE, fixH_Sym=FALSE,
-    orthW_RNA=FALSE, orthH_RNA=FALSE, orthT=FALSE, orthH_Sym=FALSE,
+    orthW_RNA=FALSE, lambda_orthW=0,
+    orthH_RNA=FALSE, orthT=FALSE, orthH_Sym=FALSE,
     pseudocount=.Machine$double.eps,
     L1_W_RNA=1e-10, L2_W_RNA=1e-10,
     L1_H_RNA=1e-10, L2_H_RNA=1e-10,
@@ -108,9 +110,14 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     init <- match.arg(init)
     T_regularization <- match.arg(T_regularization)
     H_Sym_structure <- match.arg(H_Sym_structure)
+    # Deprecation: orthW_RNA -> lambda_orthW
+    if(orthW_RNA){
+        warning("orthW_RNA=TRUE is deprecated; setting lambda_orthW=1. Use lambda_orthW directly.")
+        lambda_orthW <- 1
+    }
     .checkMachima2(X_RNA, X_Epi, label, T,
         fixW_RNA, fixH_RNA, fixT, fixH_Sym,
-        orthW_RNA, orthH_RNA, orthT, orthH_Sym,
+        orthW_RNA, lambda_orthW, orthH_RNA, orthT, orthH_Sym,
         pseudocount,
         L1_W_RNA, L2_W_RNA, L1_H_RNA, L2_H_RNA,
         L1_T, L2_T, L1_H_Sym, L2_H_Sym, orderReg, horizontal,
@@ -178,7 +185,7 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
             # Update2: W_RNA
             if(!fixW_RNA){
                 W_RNA <- .updateW_RNA2_HZL(X_RNA, X_GAM, W_RNA, H_RNA, H_Sym, J, Beta,
-                    L1_W_RNA, L2_W_RNA, orderReg, orthW_RNA, root, Pi_RNA, Pi_Epi)
+                    L1_W_RNA, L2_W_RNA, orderReg, lambda_orthW, root, Pi_RNA, Pi_Epi)
             }
             # Update3: H_RNA
             if(!fixH_RNA){
@@ -225,7 +232,7 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
             # Step3: Update W_RNA
             if(!fixW_RNA){
                 W_RNA <- .updateW_RNA2(X_RNA, X_Epi, W_RNA, H_RNA, H_Sym, T, J, Beta,
-                    L1_W_RNA, L2_W_RNA, orderReg, orthW_RNA, root, Pi_RNA, Pi_Epi)
+                    L1_W_RNA, L2_W_RNA, orderReg, lambda_orthW, root, Pi_RNA, Pi_Epi)
             }
             # Step4: Update H_RNA
             if(!fixH_RNA){

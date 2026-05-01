@@ -17,6 +17,7 @@ Machima(
   fixH_RNA = FALSE,
   fixT = FALSE,
   orthW_RNA = FALSE,
+  lambda_orthW = 0,
   orthH_RNA = FALSE,
   orthT = FALSE,
   orthH_Epi = FALSE,
@@ -58,7 +59,9 @@ Machima(
 
 \item{fixT}{Fix value option of T (for Transfer Learning, Default: FALSE)}
 
-\item{orthW_RNA}{Orthogonal option of W_RNA (for uniqueness, Default: FALSE)}
+\item{orthW_RNA}{Deprecated. Use lambda_orthW instead. (Default: FALSE)}
+
+\item{lambda_orthW}{Strength of W_RNA column orthogonality: 0=standard NMF, 1=full orthogonal, intermediate=blend. (Default: 0)}
 
 \item{orthH_RNA}{Orthogonal option of H_RNA (for uniqueness, Default: FALSE)}
 

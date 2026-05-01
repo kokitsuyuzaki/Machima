@@ -10,7 +10,8 @@
 #' @param fixW_RNA Fix value option of W_RNA (for Transfer Learning, Default: FALSE)
 #' @param fixH_RNA Fix value option of H_RNA (for Transfer Learning, Default: FALSE)
 #' @param fixT Fix value option of T (for Transfer Learning, Default: FALSE)
-#' @param orthW_RNA Orthogonal option of W_RNA (for uniqueness, Default: FALSE)
+#' @param orthW_RNA Deprecated. Use lambda_orthW instead. (Default: FALSE)
+#' @param lambda_orthW Strength of W_RNA column orthogonality: 0=standard NMF, 1=full orthogonal, intermediate=blend. (Default: 0)
 #' @param orthH_RNA Orthogonal option of H_RNA (for uniqueness, Default: FALSE)
 #' @param orthT Orthogonal option of T (for uniqueness, Default: FALSE)
 #' @param orthH_Epi Orthogonal option of H_Epi (for uniqueness, Default: FALSE)
@@ -49,7 +50,8 @@
 #' @export
 Machima <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     fixW_RNA=FALSE, fixH_RNA=FALSE, fixT=FALSE,
-    orthW_RNA=FALSE, orthH_RNA=FALSE, orthT=FALSE, orthH_Epi=FALSE,
+    orthW_RNA=FALSE, lambda_orthW=0,
+    orthH_RNA=FALSE, orthT=FALSE, orthH_Epi=FALSE,
     pseudocount=.Machine$double.eps,
     L1_W_RNA=1e-10, L2_W_RNA=1e-10,
     L1_H_RNA=1e-10, L2_H_RNA=1e-10,
@@ -61,9 +63,13 @@ Machima <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     num.iter=30, verbose=FALSE){
     # Argument Check
     init <- match.arg(init)
+    if(orthW_RNA){
+        warning("orthW_RNA=TRUE is deprecated; setting lambda_orthW=1. Use lambda_orthW directly.")
+        lambda_orthW <- 1
+    }
     .checkMachima(X_RNA, X_Epi, label, T,
         fixW_RNA, fixH_RNA, fixT,
-        orthW_RNA, orthH_RNA, orthT, orthH_Epi,
+        orthW_RNA, lambda_orthW, orthH_RNA, orthT, orthH_Epi,
         pseudocount,
         L1_W_RNA, L2_W_RNA, L1_H_RNA, L2_H_RNA,
         L1_T, L2_T, L1_H_Epi, L2_H_Epi, orderReg, horizontal,
@@ -106,7 +112,7 @@ Machima <- function(X_RNA, X_Epi, label=NULL, T=NULL,
             H_Epi <- .updateH_Epi_HZL(X_GAM, W_RNA, H_Epi, J, Beta, L1_H_Epi, L2_H_Epi, orderReg, orthH_Epi, root, Pi_RNA, Pi_Epi)
             # Update2: W_RNA
             if(!fixW_RNA){
-                W_RNA <- .updateW_RNA_HZL(X_RNA, X_GAM, W_RNA, H_RNA, H_Epi, J, Beta, L1_W_RNA, L2_W_RNA, orderReg, orthW_RNA, root, Pi_RNA, Pi_Epi)
+                W_RNA <- .updateW_RNA_HZL(X_RNA, X_GAM, W_RNA, H_RNA, H_Epi, J, Beta, L1_W_RNA, L2_W_RNA, orderReg, lambda_orthW, root, Pi_RNA, Pi_Epi)
             }
             # Update3: H_RNA
             if(!fixH_RNA){
@@ -123,7 +129,7 @@ Machima <- function(X_RNA, X_Epi, label=NULL, T=NULL,
             }
             # Step3: Update W_RNA
             if(!fixW_RNA){
-                W_RNA <- .updateW_RNA(X_RNA, X_Epi, W_RNA, H_RNA, H_Epi, T, J, Beta, L1_W_RNA, L2_W_RNA, orderReg, orthW_RNA, root, Pi_RNA, Pi_Epi)
+                W_RNA <- .updateW_RNA(X_RNA, X_Epi, W_RNA, H_RNA, H_Epi, T, J, Beta, L1_W_RNA, L2_W_RNA, orderReg, lambda_orthW, root, Pi_RNA, Pi_Epi)
             }
             # Step4: Update H_RNA
             if(!fixH_RNA){

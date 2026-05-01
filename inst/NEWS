@@ -1,3 +1,10 @@
+VERSION 1.4.0
+------------------------
+   o Added lambda_orthW in [0, 1] to Machima() and Machima2() for
+     continuous control of W_RNA column orthogonality (replacing
+     binary orthW_RNA toggle). Default 0 = standard NMF.
+   o orthW_RNA is now deprecated (still functional, emits warning)
+
 VERSION 1.3.0
 ------------------------
    o H_Sym_structure="diagonal" now uses proper constrained MU
