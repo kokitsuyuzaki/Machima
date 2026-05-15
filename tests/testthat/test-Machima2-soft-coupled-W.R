@@ -15,10 +15,11 @@ out_inf2 <- Machima2(X_RNA, X_Epi, J=J, num.iter=10, lambda_coupling=Inf)
 expect_equal(out_inf$W_RNA, out_inf2$W_RNA)
 expect_null(out_inf$U)
 
-# fixU=TRUE, init_U=NULL → U=0, same as hard share
+# fixU=TRUE, explicit init_U=zero → same as hard share
 set.seed(1)
 out_fix0 <- Machima2(X_RNA, X_Epi, J=J, num.iter=10,
-    lambda_coupling=1.0, fixU=TRUE)
+    lambda_coupling=1.0, fixU=TRUE,
+    init_U=matrix(0, 15, J))
 expect_equal(out_fix0$W_RNA, out_inf$W_RNA)
 
 # lambda_coupling < Inf, fixU=FALSE → U learned

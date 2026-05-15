@@ -133,7 +133,7 @@
         if(!is.null(init_U)){
             U_coupling <- init_U
         }else{
-            U_coupling <- matrix(0, nrow(X_RNA), J)
+            U_coupling <- matrix(runif(nrow(X_RNA) * J, 1e-5, 1e-2), nrow(X_RNA), J)
         }
     }
     # Weight (lambda_balance: 0=RNA only, 0.5=equal, 1=Epi only)
@@ -287,7 +287,7 @@
         if(!is.null(init_U)){
             U_coupling <- init_U
         }else{
-            U_coupling <- lapply(X_RNA, function(x) matrix(0, nrow(x), J))
+            U_coupling <- lapply(X_RNA, function(x) matrix(runif(nrow(x) * J, 1e-5, 1e-2), nrow(x), J))
         }
     }
     # Weight (lambda_balance: 0=RNA only, 0.5=equal, 1=Epi only)

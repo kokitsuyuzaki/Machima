@@ -154,7 +154,7 @@ Machima2(
 
 \item{lambda_coupling}{Coupling strength between W_RNA and Hi-C basis. Inf=hard share (default), 0=independent. When finite, W_E=W_RNA+U is used for Hi-C with penalty lambda_coupling*||U||^2. (Default: Inf)}
 
-\item{init_U}{Optional list of initial U matrices (each n_k x J, non-negative). (Default: NULL = zero)}
+\item{init_U}{Optional list of initial U matrices (each n_k x J, non-negative). When NULL, U is initialized to small random values runif(1e-5, 1e-2). (Default: NULL)}
 
 \item{fixU}{If TRUE, U is not updated. Auto-defaults to TRUE when lambda_coupling=Inf. (Default: NULL = auto)}
 }

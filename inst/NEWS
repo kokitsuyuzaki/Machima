@@ -1,3 +1,10 @@
+VERSION 1.6.1
+------------------------
+   o Fixed default initialization of U when lambda_coupling < Inf.
+     U_init=0 caused MU dead-zone (U stayed zero throughout training).
+     New default: runif(1e-5, 1e-2), small enough to preserve starting
+     reconstruction but non-zero for MU to update.
+
 VERSION 1.6.0
 ------------------------
    o Added lambda_coupling for soft coupling between W_RNA and Hi-C
