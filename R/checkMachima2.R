@@ -9,7 +9,8 @@
     nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
     T_regularization, lambda_T, T_rank, H_Sym_structure,
     lambda_balance,
-    J_hic_only, W_hic_init, fixW_hic){
+    J_hic_only, W_hic_init, fixW_hic,
+    lambda_coupling, init_U, fixU){
     # Check X_RNA
     check1 <- is.matrix(X_RNA)
     check2 <- is.list(X_RNA)
@@ -307,4 +308,30 @@
     if(fixW_hic && is.null(W_hic_init) && J_hic_only > 0L){
         stop("fixW_hic=TRUE requires W_hic_init when J_hic_only > 0")
     }
+    # Check lambda_coupling
+    stopifnot(is.numeric(lambda_coupling))
+    stopifnot(length(lambda_coupling) == 1)
+    stopifnot(is.infinite(lambda_coupling) || lambda_coupling >= 0)
+    # Check init_U
+    if(!is.null(init_U)){
+        if(check1){
+            if(!is.matrix(init_U)) stop("init_U must be a matrix when X_RNA is a matrix")
+            if(nrow(init_U) != nrow(X_RNA)) stop("init_U nrow must match nrow(X_RNA)")
+            if(ncol(init_U) != J) stop(paste0("init_U ncol must be J=", J))
+            if(any(init_U < 0)) stop("init_U must be non-negative")
+        }
+        if(check2){
+            if(!is.list(init_U)) stop("init_U must be a list when X_RNA is a list")
+            if(length(init_U) != length(X_RNA)) stop("init_U length must match X_RNA length")
+            lapply(seq_along(init_U), function(k){
+                if(nrow(init_U[[k]]) != nrow(X_RNA[[k]])) stop(paste0("init_U[[",k,"]] nrow mismatch"))
+                if(ncol(init_U[[k]]) != J) stop(paste0("init_U[[",k,"]] ncol must be J=",J))
+                if(any(init_U[[k]] < 0)) stop(paste0("init_U[[",k,"]] must be non-negative"))
+            })
+        }
+    }
+    # Check/auto-default fixU
+    if(is.null(fixU)) fixU <- is.infinite(lambda_coupling)
+    stopifnot(is.logical(fixU))
+    stopifnot(length(fixU) == 1)
 }

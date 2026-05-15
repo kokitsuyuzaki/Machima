@@ -51,7 +51,10 @@ Machima2(
   H_Sym_structure = c("symmetric", "diagonal"),
   J_hic_only = 0L,
   W_hic_init = NULL,
-  fixW_hic = FALSE
+  fixW_hic = FALSE,
+  lambda_coupling = Inf,
+  init_U = NULL,
+  fixU = NULL
 )
 }
 \arguments{
@@ -148,6 +151,12 @@ Machima2(
 \item{W_hic_init}{Optional list of initial W_hic matrices (each l_k x J_hic_only). (Default: NULL)}
 
 \item{fixW_hic}{If TRUE, do not update W_hic. (Default: FALSE)}
+
+\item{lambda_coupling}{Coupling strength between W_RNA and Hi-C basis. Inf=hard share (default), 0=independent. When finite, W_E=W_RNA+U is used for Hi-C with penalty lambda_coupling*||U||^2. (Default: Inf)}
+
+\item{init_U}{Optional list of initial U matrices (each n_k x J, non-negative). (Default: NULL = zero)}
+
+\item{fixU}{If TRUE, U is not updated. Auto-defaults to TRUE when lambda_coupling=Inf. (Default: NULL = auto)}
 }
 \value{
 A list containing W_RNA, H_RNA, H_Sym, T, RecError, RelChange. When T_regularization="low_rank", also T_factors. When J_hic_only>0, also W_hic and h_hic.

@@ -2,19 +2,19 @@
     init_W_RNA, init_H_RNA, init_H_Sym,
     nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
     T_regularization, T_rank, H_Sym_structure, lambda_balance,
-    J_hic_only=0L, W_hic_init=NULL){
+    J_hic_only=0L, W_hic_init=NULL, lambda_coupling=Inf, init_U=NULL){
     if(is.matrix(X_RNA) && is.matrix(X_Epi)){
         int <- .initMachima2_Matrix(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
             init_W_RNA, init_H_RNA, init_H_Sym,
             nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
             T_regularization, T_rank, H_Sym_structure, lambda_balance,
-            J_hic_only, W_hic_init)
+            J_hic_only, W_hic_init, lambda_coupling, init_U)
     }else{
         int <- .initMachima2_List(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
             init_W_RNA, init_H_RNA, init_H_Sym,
             nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
             T_regularization, T_rank, H_Sym_structure, lambda_balance,
-            J_hic_only, W_hic_init)
+            J_hic_only, W_hic_init, lambda_coupling, init_U)
     }
     int
 }
@@ -28,7 +28,7 @@
     init_W_RNA, init_H_RNA, init_H_Sym,
     nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
     T_regularization, T_rank, H_Sym_structure, lambda_balance,
-    J_hic_only=0L, W_hic_init=NULL){
+    J_hic_only=0L, W_hic_init=NULL, lambda_coupling=Inf, init_U=NULL){
     X_RNA[which(X_RNA == 0)] <- pseudocount
     X_Epi[which(X_Epi == 0)] <- pseudocount
     # Symmetrize after pseudocount
@@ -127,6 +127,15 @@
         }
         h_hic <- rep(1, J_hic_only)
     }
+    # Soft-coupling U initialization
+    U_coupling <- NULL
+    if(!is.infinite(lambda_coupling)){
+        if(!is.null(init_U)){
+            U_coupling <- init_U
+        }else{
+            U_coupling <- matrix(0, nrow(X_RNA), J)
+        }
+    }
     # Weight (lambda_balance: 0=RNA only, 0.5=equal, 1=Epi only)
     Pi_RNA <- 2 * (1 - lambda_balance) * .weight(X_RNA)
     Pi_Epi <- 2 * lambda_balance * .weight(X_Epi)
@@ -137,7 +146,7 @@
     RelChange[1] <- thr * 10
     list(X_RNA=X_RNA, X_Epi=X_Epi,
         W_RNA=W_RNA, H_RNA=H_RNA, H_Sym=H_Sym,
-        T=T, U=U, V=V, W_hic=W_hic, h_hic=h_hic,
+        T=T, U=U, V=V, W_hic=W_hic, h_hic=h_hic, U_coupling=U_coupling,
         Pi_RNA=Pi_RNA, Pi_Epi=Pi_Epi,
         RecError=RecError, RelChange=RelChange)
 }
@@ -146,7 +155,7 @@
     init_W_RNA, init_H_RNA, init_H_Sym,
     nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
     T_regularization, T_rank, H_Sym_structure, lambda_balance,
-    J_hic_only=0L, W_hic_init=NULL){
+    J_hic_only=0L, W_hic_init=NULL, lambda_coupling=Inf, init_U=NULL){
     X_RNA <- lapply(X_RNA, function(x){
         x[which(x == 0)] <- pseudocount
         x
@@ -272,6 +281,15 @@
         }
         h_hic <- rep(1, J_hic_only)
     }
+    # Soft-coupling U initialization (List mode)
+    U_coupling <- NULL
+    if(!is.infinite(lambda_coupling)){
+        if(!is.null(init_U)){
+            U_coupling <- init_U
+        }else{
+            U_coupling <- lapply(X_RNA, function(x) matrix(0, nrow(x), J))
+        }
+    }
     # Weight (lambda_balance: 0=RNA only, 0.5=equal, 1=Epi only)
     Pi_RNA <- lapply(X_RNA, function(x) 2 * (1 - lambda_balance) * .weight(x))
     Pi_Epi <- lapply(X_Epi, function(x) 2 * lambda_balance * .weight(x))
@@ -282,7 +300,7 @@
     RelChange[1] <- thr * 10
     list(X_RNA=X_RNA, X_Epi=X_Epi,
         W_RNA=W_RNA, H_RNA=H_RNA, H_Sym=H_Sym,
-        T=T, U=U, V=V, W_hic=W_hic, h_hic=h_hic,
+        T=T, U=U, V=V, W_hic=W_hic, h_hic=h_hic, U_coupling=U_coupling,
         Pi_RNA=Pi_RNA, Pi_Epi=Pi_Epi,
         RecError=RecError, RelChange=RelChange)
 }

@@ -2,21 +2,21 @@
 # Same form as updateH_Sym_diag but using W_hic instead of G_shared
 
 .updateH_hic <- function(X_Epi, W_RNA, W_hic, H_Sym, T, h_hic, Beta,
-    L1_H, L2_H, root, Pi_Epi){
+    L1_H, L2_H, root, Pi_Epi, U=NULL){
     if(is.matrix(X_Epi)){
         h_hic <- .updateH_hic_Matrix(X_Epi, W_RNA, W_hic, H_Sym, T, h_hic,
-            Beta, L1_H, L2_H, root)
+            Beta, L1_H, L2_H, root, U_k=U)
     }else{
         h_hic <- .updateH_hic_List(X_Epi, W_RNA, W_hic, H_Sym, T, h_hic,
-            Beta, L1_H, L2_H, root, Pi_Epi)
+            Beta, L1_H, L2_H, root, Pi_Epi, U=U)
     }
     h_hic
 }
 
 .updateH_hic_Matrix <- function(X_Epi, W_RNA, W_hic, H_Sym, T, h_hic,
-    Beta, L1_H, L2_H, root){
+    Beta, L1_H, L2_H, root, U_k=NULL){
     Jh <- length(h_hic)
-    R_full <- .reconstructEpi_single(W_RNA, T, W_hic, H_Sym, h_hic)
+    R_full <- .reconstructEpi_single(W_RNA, T, W_hic, H_Sym, h_hic, U_k=U_k)
     SbX <- R_full^(Beta - 2) * X_Epi
     Sb <- R_full^(Beta - 1)
     numer <- rep(0, Jh)
@@ -30,12 +30,13 @@
 }
 
 .updateH_hic_List <- function(X_Epi, W_RNA, W_hic, H_Sym, T, h_hic,
-    Beta, L1_H, L2_H, root, Pi_Epi){
+    Beta, L1_H, L2_H, root, Pi_Epi, U=NULL){
     Jh <- length(h_hic)
     numer <- rep(0, Jh)
     denom <- rep(0, Jh)
     for(k in seq_along(X_Epi)){
-        R_full <- .reconstructEpi_single(W_RNA[[k]], T[[k]], W_hic[[k]], H_Sym, h_hic)
+        U_k <- if(!is.null(U)) U[[k]] else NULL
+        R_full <- .reconstructEpi_single(W_RNA[[k]], T[[k]], W_hic[[k]], H_Sym, h_hic, U_k=U_k)
         SbX <- R_full^(Beta - 2) * X_Epi[[k]]
         Sb <- R_full^(Beta - 1)
         for(i in seq_len(Jh)){

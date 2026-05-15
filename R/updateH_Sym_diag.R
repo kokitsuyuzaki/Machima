@@ -6,23 +6,24 @@
 
 .updateH_Sym_diag <- function(X_Epi, W_RNA, h, T, J, Beta,
     L1_H_Sym, L2_H_Sym, orderReg, root, Pi_Epi,
-    W_hic=NULL, h_hic=numeric(0)){
+    W_hic=NULL, h_hic=numeric(0), U=NULL){
     if(is.matrix(X_Epi)){
         h <- .updateH_Sym_diag_Matrix(X_Epi, W_RNA, h, T, J, Beta,
             L1_H_Sym, L2_H_Sym, orderReg, root, Pi_Epi,
-            W_hic_k=W_hic, h_hic=h_hic)
+            W_hic_k=W_hic, h_hic=h_hic, U_k=U)
     }else{
         h <- .updateH_Sym_diag_List(X_Epi, W_RNA, h, T, J, Beta,
             L1_H_Sym, L2_H_Sym, orderReg, root, Pi_Epi,
-            W_hic=W_hic, h_hic=h_hic)
+            W_hic=W_hic, h_hic=h_hic, U=U)
     }
     h
 }
 
 .updateH_Sym_diag_Matrix <- function(X_Epi, W_RNA, h, T, J, Beta,
     L1_H_Sym, L2_H_Sym, orderReg, root, Pi_Epi,
-    W_hic_k=NULL, h_hic=numeric(0)){
-    G <- T %*% W_RNA
+    W_hic_k=NULL, h_hic=numeric(0), U_k=NULL){
+    W_E <- if(!is.null(U_k)) W_RNA + U_k else W_RNA
+    G <- T %*% W_E
     S_hat <- G %*% diag(h, nrow=J) %*% t(G)
     S_hat <- .addHic(S_hat, W_hic_k, h_hic)
     numer <- rep(0, J)
@@ -43,11 +44,12 @@
 
 .updateH_Sym_diag_List <- function(X_Epi, W_RNA, h, T, J, Beta,
     L1_H_Sym, L2_H_Sym, orderReg, root, Pi_Epi,
-    W_hic=NULL, h_hic=numeric(0)){
+    W_hic=NULL, h_hic=numeric(0), U=NULL){
     numer <- rep(0, J)
     denom <- rep(0, J)
     for(k in seq_along(X_Epi)){
-        G <- T[[k]] %*% W_RNA[[k]]
+        W_E <- if(!is.null(U)) W_RNA[[k]] + U[[k]] else W_RNA[[k]]
+        G <- T[[k]] %*% W_E
         S_hat <- G %*% diag(h, nrow=J) %*% t(G)
         S_hat <- .addHic(S_hat, W_hic[[k]], h_hic)
         SbX <- S_hat^(Beta - 2) * X_Epi[[k]]
@@ -71,30 +73,31 @@
 
 .updateH_Sym_diag_HZL <- function(X_GAM, W_RNA, h, J, Beta,
     L1_H_Sym, L2_H_Sym, orderReg, root, Pi_Epi,
-    W_hic=NULL, h_hic=numeric(0)){
+    W_hic=NULL, h_hic=numeric(0), U=NULL){
     if(is.matrix(X_GAM)){
         h <- .updateH_Sym_diag_HZL_Matrix(X_GAM, W_RNA, h, J, Beta,
             L1_H_Sym, L2_H_Sym, orderReg, root, Pi_Epi,
-            W_hic_k=W_hic, h_hic=h_hic)
+            W_hic_k=W_hic, h_hic=h_hic, U_k=U)
     }else{
         h <- .updateH_Sym_diag_HZL_List(X_GAM, W_RNA, h, J, Beta,
             L1_H_Sym, L2_H_Sym, orderReg, root, Pi_Epi,
-            W_hic=W_hic, h_hic=h_hic)
+            W_hic=W_hic, h_hic=h_hic, U=U)
     }
     h
 }
 
 .updateH_Sym_diag_HZL_Matrix <- function(X_GAM, W_RNA, h, J, Beta,
     L1_H_Sym, L2_H_Sym, orderReg, root, Pi_Epi,
-    W_hic_k=NULL, h_hic=numeric(0)){
-    S_hat <- W_RNA %*% diag(h, nrow=J) %*% t(W_RNA)
+    W_hic_k=NULL, h_hic=numeric(0), U_k=NULL){
+    W_E <- if(!is.null(U_k)) W_RNA + U_k else W_RNA
+    S_hat <- W_E %*% diag(h, nrow=J) %*% t(W_E)
     S_hat <- .addHic(S_hat, W_hic_k, h_hic)
     numer <- rep(0, J)
     denom <- rep(0, J)
     SbX <- S_hat^(Beta - 2) * X_GAM
     Sb <- S_hat^(Beta - 1)
     for(i in seq_len(J)){
-        wi <- W_RNA[, i]
+        wi <- W_E[, i]
         numer[i] <- as.numeric(t(wi) %*% SbX %*% wi)
         denom[i] <- as.numeric(t(wi) %*% Sb %*% wi) + L1_H_Sym + L2_H_Sym * h[i]
     }
@@ -107,16 +110,17 @@
 
 .updateH_Sym_diag_HZL_List <- function(X_GAM, W_RNA, h, J, Beta,
     L1_H_Sym, L2_H_Sym, orderReg, root, Pi_Epi,
-    W_hic=NULL, h_hic=numeric(0)){
+    W_hic=NULL, h_hic=numeric(0), U=NULL){
     numer <- rep(0, J)
     denom <- rep(0, J)
     for(k in seq_along(X_GAM)){
-        S_hat <- W_RNA[[k]] %*% diag(h, nrow=J) %*% t(W_RNA[[k]])
+        W_E <- if(!is.null(U)) W_RNA[[k]] + U[[k]] else W_RNA[[k]]
+        S_hat <- W_E %*% diag(h, nrow=J) %*% t(W_E)
         S_hat <- .addHic(S_hat, W_hic[[k]], h_hic)
         SbX <- S_hat^(Beta - 2) * X_GAM[[k]]
         Sb <- S_hat^(Beta - 1)
         for(i in seq_len(J)){
-            wi <- W_RNA[[k]][, i]
+            wi <- W_E[, i]
             numer[i] <- numer[i] + Pi_Epi[[k]] * as.numeric(t(wi) %*% SbX %*% wi)
             denom[i] <- denom[i] + Pi_Epi[[k]] * (as.numeric(t(wi) %*% Sb %*% wi) + L1_H_Sym + L2_H_Sym * h[i])
         }

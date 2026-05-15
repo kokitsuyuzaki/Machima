@@ -25,31 +25,32 @@
 # --- Reconstruction errors for symmetric model ---
 
 .recErrors2 <- function(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi,
-    W_hic=NULL, h_hic=numeric(0)){
+    W_hic=NULL, h_hic=numeric(0), U=NULL){
     if(is.matrix(X_RNA) && is.matrix(X_Epi)){
-        d_Beta <- .recErrors2_Matrix(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi, W_hic, h_hic)
+        d_Beta <- .recErrors2_Matrix(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi, W_hic, h_hic, U)
     }else{
-        d_Beta <- .recErrors2_List(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi, W_hic, h_hic)
+        d_Beta <- .recErrors2_List(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi, W_hic, h_hic, U)
     }
     d_Beta
 }
 
 .recErrors2_Matrix <- function(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi,
-    W_hic=NULL, h_hic=numeric(0)){
+    W_hic=NULL, h_hic=numeric(0), U=NULL){
     left <- Pi_RNA * .BetaDivergence(X_RNA, W_RNA %*% H_RNA, Beta)
-    R_epi <- .reconstructEpi_single(W_RNA, T, W_hic, H_Sym, h_hic)
+    R_epi <- .reconstructEpi_single(W_RNA, T, W_hic, H_Sym, h_hic, U_k=U)
     right <- Pi_Epi * .BetaDivergence(X_Epi, R_epi, Beta)
     left + right
 }
 
 .recErrors2_List <- function(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi,
-    W_hic=NULL, h_hic=numeric(0)){
+    W_hic=NULL, h_hic=numeric(0), U=NULL){
     lefts <- sum(unlist(lapply(seq_along(X_RNA), function(x){
         Pi_RNA[[x]] * .BetaDivergence(X_RNA[[x]], W_RNA[[x]] %*% H_RNA, Beta)
     })))
     rights <- sum(unlist(lapply(seq_along(X_Epi), function(x){
         W_hic_k <- if(!is.null(W_hic)) W_hic[[x]] else NULL
-        R_epi <- .reconstructEpi_single(W_RNA[[x]], T[[x]], W_hic_k, H_Sym, h_hic)
+        U_k <- if(!is.null(U)) U[[x]] else NULL
+        R_epi <- .reconstructEpi_single(W_RNA[[x]], T[[x]], W_hic_k, H_Sym, h_hic, U_k=U_k)
         Pi_Epi[[x]] * .BetaDivergence(X_Epi[[x]], R_epi, Beta)
     })))
     lefts + rights

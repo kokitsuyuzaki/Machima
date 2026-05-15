@@ -1,3 +1,10 @@
+VERSION 1.6.0
+------------------------
+   o Added lambda_coupling for soft coupling between W_RNA and Hi-C
+     basis. When finite, W_E := W_RNA + U is used for Hi-C with
+     penalty lambda_coupling * ||U||^2. Default Inf = hard share.
+   o Added init_U and fixU arguments.
+
 VERSION 1.5.0
 ------------------------
    o Added J_hic_only parameter to Machima2() for Hi-C-only basis
