@@ -74,6 +74,11 @@
 #' @param lambda_coupling Coupling strength between W_RNA and Hi-C basis. Inf=hard share (default), 0=independent. When finite, W_E=W_RNA+U is used for Hi-C with penalty lambda_coupling*||U||^2. (Default: Inf)
 #' @param init_U Optional list of initial U matrices (each n_k x J, non-negative). When NULL, U is initialized to small random values runif(1e-5, 1e-2). (Default: NULL)
 #' @param fixU If TRUE, U is not updated. Auto-defaults to TRUE when lambda_coupling=Inf. (Default: NULL = auto)
+#' @param use_shared_background If TRUE, decompose Hi-C into shared background g_0 + cell-type deviations delta_c. Mutually exclusive with lambda_coupling < Inf. (Default: FALSE)
+#' @param init_g0 Optional list of initial w_0 vectors (each length n_k). NULL = SVD-derived. (Default: NULL)
+#' @param init_delta Optional list of initial delta matrices (each n_k x J). NULL = W_RNA differential. (Default: NULL)
+#' @param lambda_delta Penalty on delta deviations. Inf = delta forced to zero. (Default: 1)
+#' @param fix_g0 If TRUE, w_0 is not updated. (Default: FALSE)
 #' @param J_hic_only Number of Hi-C-only basis columns. When >0, Hi-C reconstruction becomes G_full*H_full*G_full^T with hic-only columns independent of W_RNA. (Default: 0)
 #' @param W_hic_init Optional list of initial W_hic matrices (each l_k x J_hic_only). (Default: NULL)
 #' @param fixW_hic If TRUE, do not update W_hic. (Default: FALSE)
@@ -113,7 +118,9 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     lambda_T=0, T_rank=NULL,
     H_Sym_structure=c("symmetric", "diagonal"),
     J_hic_only=0L, W_hic_init=NULL, fixW_hic=FALSE,
-    lambda_coupling=Inf, init_U=NULL, fixU=NULL){
+    lambda_coupling=Inf, init_U=NULL, fixU=NULL,
+    use_shared_background=FALSE, init_g0=NULL, init_delta=NULL,
+    lambda_delta=1, fix_g0=FALSE){
     # Argument Check
     init <- match.arg(init)
     T_regularization <- match.arg(T_regularization)
@@ -136,7 +143,8 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
         nmf_init_n_restart, nmf_init_num_iter, nmf_init_algorithm,
         T_regularization, lambda_T, T_rank, H_Sym_structure,
         lambda_balance, J_hic_only, W_hic_init, fixW_hic,
-        lambda_coupling, init_U, fixU)
+        lambda_coupling, init_U, fixU,
+        use_shared_background, init_g0, init_delta, lambda_delta, fix_g0)
     # Initialization
     int <- .initMachima2(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
         init_W_RNA, init_H_RNA, init_H_Sym,
@@ -160,6 +168,16 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     W_hic <- int$W_hic
     h_hic <- int$h_hic
     U_coupling <- int$U_coupling
+    # Shared background init
+    shared_w0 <- NULL
+    shared_delta <- NULL
+    shared_h_vec <- NULL
+    if(use_shared_background){
+        sh <- .initShared(X_RNA, X_Epi, W_RNA, T, J, init_g0, init_delta)
+        shared_w0 <- sh$w_0
+        shared_delta <- sh$delta
+        shared_h_vec <- sh$h_vec
+    }
     # Before Update
     if(viz && !is.null(figdir)){
         png(filename = paste0(figdir, "/0.png"),
@@ -177,13 +195,53 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     # Iteration
     iter <- 1
     while ((RelChange[iter] > thr) && (iter <= num.iter)){
-        if(horizontal){
+        if(use_shared_background){
+            pre_Error <- .recErrors_shared(X_RNA, W_RNA, H_RNA, X_Epi, T,
+                shared_w0, shared_delta, shared_h_vec, J, Beta, Pi_RNA, Pi_Epi)
+        }else if(horizontal){
             pre_Error <- .recErrors2_HZL(X_RNA, W_RNA, H_RNA, X_GAM, H_Sym, Beta, Pi_RNA, Pi_Epi)
         }else{
             pre_Error <- .recErrors2(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi, W_hic, h_hic, U_coupling)
         }
+        # Shared Background Mode
+        if(use_shared_background){
+            # Update h_vec (J+1 diagonal weights)
+            shared_h_vec <- .updateH_shared(X_Epi, T, shared_w0, shared_delta,
+                shared_h_vec, J, Beta, L1_H_Sym, L2_H_Sym, root, Pi_Epi)
+            # Update w_0 (shared background basis)
+            if(!fix_g0){
+                shared_w0 <- .updateSharedG(X_Epi, T, shared_w0, shared_delta,
+                    shared_h_vec, J, Beta, L1_W_RNA, L2_W_RNA, root, Pi_Epi)
+            }
+            # Update delta (cell-type deviations)
+            if(!is.infinite(lambda_delta)){
+                shared_delta <- .updateDelta(X_Epi, T, shared_w0, shared_delta,
+                    shared_h_vec, J, Beta, L1_W_RNA, L2_W_RNA, lambda_delta,
+                    root, Pi_Epi)
+            }
+            # Update W_RNA and H_RNA (RNA side only, no Hi-C gradient)
+            if(!fixW_RNA){
+                # RNA-only W_RNA update (standard NMF, no Epi term)
+                if(is.matrix(X_RNA)){
+                    WH <- W_RNA %*% H_RNA
+                    numer <- (WH^(Beta - 2) * X_RNA) %*% t(H_RNA)
+                    denom <- WH^(Beta - 1) %*% t(H_RNA) + L1_W_RNA + L2_W_RNA * W_RNA
+                    W_RNA <- W_RNA * (numer / denom)^.rho(Beta, root)
+                }else{
+                    W_RNA <- lapply(seq_along(X_RNA), function(k){
+                        WH <- W_RNA[[k]] %*% H_RNA
+                        numer <- Pi_RNA[[k]] * ((WH^(Beta - 2) * X_RNA[[k]]) %*% t(H_RNA))
+                        denom <- Pi_RNA[[k]] * (WH^(Beta - 1) %*% t(H_RNA) + L1_W_RNA + L2_W_RNA * W_RNA[[k]])
+                        W_RNA[[k]] * (numer / denom)^.rho(Beta, root)
+                    })
+                }
+            }
+            if(!fixH_RNA){
+                H_RNA <- .updateH_RNA(X_RNA, W_RNA, H_RNA, J, Beta,
+                    L1_H_RNA, L2_H_RNA, orderReg, orthH_RNA, root, Pi_RNA, Pi_Epi)
+            }
         # Horizontal Mode
-        if(horizontal){
+        }else if(horizontal){
             # Update1: H_Sym
             if(!fixH_Sym){
                 if(H_Sym_structure == "diagonal"){
@@ -283,7 +341,12 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
         if(horizontal){
             RecError[iter] <- .recErrors2_HZL(X_RNA, W_RNA, H_RNA, X_GAM, H_Sym, Beta, Pi_RNA, Pi_Epi)
         }else{
+                    if(use_shared_background){
+            RecError[iter] <- .recErrors_shared(X_RNA, W_RNA, H_RNA, X_Epi, T,
+                shared_w0, shared_delta, shared_h_vec, J, Beta, Pi_RNA, Pi_Epi)
+        }else{
             RecError[iter] <- .recErrors2(X_RNA, W_RNA, H_RNA, X_Epi, T, H_Sym, Beta, Pi_RNA, Pi_Epi, W_hic, h_hic, U_coupling)
+        }
         }
         RelChange[iter] <- abs(pre_Error - RecError[iter]) / RecError[iter]
         if(viz && !is.null(figdir)){
@@ -315,6 +378,27 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     }
     if(!is.null(U_coupling)){
         out$U <- U_coupling
+    }
+    if(use_shared_background){
+        out$w_0 <- shared_w0
+        out$delta <- shared_delta
+        out$h_vec <- shared_h_vec
+        out$predict_celltype_R <- function(c, chrom_idx=1){
+            if(is.matrix(X_Epi)){
+                .predict_celltype_R(T, shared_w0, shared_delta, shared_h_vec, c)
+            }else{
+                .predict_celltype_R(T[[chrom_idx]], shared_w0[[chrom_idx]],
+                    shared_delta[[chrom_idx]], shared_h_vec, c)
+            }
+        }
+        out$predict_celltype_delta <- function(c, chrom_idx=1){
+            if(is.matrix(X_Epi)){
+                .predict_celltype_delta(T, shared_w0, shared_delta, shared_h_vec, c, J)
+            }else{
+                .predict_celltype_delta(T[[chrom_idx]], shared_w0[[chrom_idx]],
+                    shared_delta[[chrom_idx]], shared_h_vec, c, J)
+            }
+        }
     }
     out
 }

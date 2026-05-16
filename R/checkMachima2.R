@@ -10,7 +10,8 @@
     T_regularization, lambda_T, T_rank, H_Sym_structure,
     lambda_balance,
     J_hic_only, W_hic_init, fixW_hic,
-    lambda_coupling, init_U, fixU){
+    lambda_coupling, init_U, fixU,
+    use_shared_background, init_g0, init_delta, lambda_delta, fix_g0){
     # Check X_RNA
     check1 <- is.matrix(X_RNA)
     check2 <- is.list(X_RNA)
@@ -334,4 +335,13 @@
     if(is.null(fixU)) fixU <- is.infinite(lambda_coupling)
     stopifnot(is.logical(fixU))
     stopifnot(length(fixU) == 1)
+    # Check shared background args
+    stopifnot(is.logical(use_shared_background))
+    if(use_shared_background && !is.infinite(lambda_coupling)){
+        stop("use_shared_background=TRUE is mutually exclusive with lambda_coupling < Inf")
+    }
+    stopifnot(is.numeric(lambda_delta))
+    stopifnot(length(lambda_delta) == 1)
+    stopifnot(lambda_delta >= 0 || is.infinite(lambda_delta))
+    stopifnot(is.logical(fix_g0))
 }

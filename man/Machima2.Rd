@@ -54,7 +54,12 @@ Machima2(
   fixW_hic = FALSE,
   lambda_coupling = Inf,
   init_U = NULL,
-  fixU = NULL
+  fixU = NULL,
+  use_shared_background = FALSE,
+  init_g0 = NULL,
+  init_delta = NULL,
+  lambda_delta = 1,
+  fix_g0 = FALSE
 )
 }
 \arguments{
@@ -157,6 +162,16 @@ Machima2(
 \item{init_U}{Optional list of initial U matrices (each n_k x J, non-negative). When NULL, U is initialized to small random values runif(1e-5, 1e-2). (Default: NULL)}
 
 \item{fixU}{If TRUE, U is not updated. Auto-defaults to TRUE when lambda_coupling=Inf. (Default: NULL = auto)}
+
+\item{use_shared_background}{If TRUE, decompose Hi-C into shared background g_0 + cell-type deviations delta_c. Mutually exclusive with lambda_coupling < Inf. (Default: FALSE)}
+
+\item{init_g0}{Optional list of initial w_0 vectors (each length n_k). NULL = SVD-derived. (Default: NULL)}
+
+\item{init_delta}{Optional list of initial delta matrices (each n_k x J). NULL = W_RNA differential. (Default: NULL)}
+
+\item{lambda_delta}{Penalty on delta deviations. Inf = delta forced to zero. (Default: 1)}
+
+\item{fix_g0}{If TRUE, w_0 is not updated. (Default: FALSE)}
 }
 \value{
 A list containing W_RNA, H_RNA, H_Sym, T, RecError, RelChange. When T_regularization="low_rank", also T_factors. When J_hic_only>0, also W_hic and h_hic.

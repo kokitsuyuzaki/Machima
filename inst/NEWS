@@ -1,3 +1,13 @@
+VERSION 1.7.0
+------------------------
+   o Added use_shared_background mode to Machima2() for explicit
+     g_0 (shared bulk background) + delta_c (cell-type deviations)
+     decomposition of Hi-C. Addresses bulk-mimicking failure where
+     per-cell-type predictions are indistinguishable.
+   o Added init_g0, init_delta, lambda_delta, fix_g0 arguments.
+   o Added predict_celltype_R() and predict_celltype_delta() in result.
+   o Mutually exclusive with lambda_coupling < Inf.
+
 VERSION 1.6.1
 ------------------------
    o Fixed default initialization of U when lambda_coupling < Inf.
