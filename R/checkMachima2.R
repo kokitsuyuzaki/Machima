@@ -11,7 +11,7 @@
     lambda_balance,
     J_hic_only, W_hic_init, fixW_hic,
     lambda_coupling, init_U, fixU,
-    use_shared_background, init_g0, init_delta, lambda_delta, fix_g0){
+    use_shared_background, init_g0, init_delta, lambda_delta, lambda_delta_anchor, fix_g0){
     # Check X_RNA
     check1 <- is.matrix(X_RNA)
     check2 <- is.list(X_RNA)
@@ -343,5 +343,8 @@
     stopifnot(is.numeric(lambda_delta))
     stopifnot(length(lambda_delta) == 1)
     stopifnot(lambda_delta >= 0 || is.infinite(lambda_delta))
+    stopifnot(is.numeric(lambda_delta_anchor))
+    stopifnot(length(lambda_delta_anchor) == 1)
+    stopifnot(lambda_delta_anchor >= 0 || is.infinite(lambda_delta_anchor))
     stopifnot(is.logical(fix_g0))
 }

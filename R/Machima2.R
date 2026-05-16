@@ -77,7 +77,8 @@
 #' @param use_shared_background If TRUE, decompose Hi-C into shared background g_0 + cell-type deviations delta_c. Mutually exclusive with lambda_coupling < Inf. (Default: FALSE)
 #' @param init_g0 Optional list of initial w_0 vectors (each length n_k). NULL = SVD-derived. (Default: NULL)
 #' @param init_delta Optional list of initial delta matrices (each n_k x J). NULL = W_RNA differential. (Default: NULL)
-#' @param lambda_delta Penalty on delta deviations. Inf = delta forced to zero. (Default: 1)
+#' @param lambda_delta Sparsity penalty on delta toward zero. (Default: 0)
+#' @param lambda_delta_anchor Anchoring penalty pulling delta toward its RNA-derived init. 0=no anchor, Inf=freeze at init. (Default: 1)
 #' @param fix_g0 If TRUE, w_0 is not updated. (Default: FALSE)
 #' @param J_hic_only Number of Hi-C-only basis columns. When >0, Hi-C reconstruction becomes G_full*H_full*G_full^T with hic-only columns independent of W_RNA. (Default: 0)
 #' @param W_hic_init Optional list of initial W_hic matrices (each l_k x J_hic_only). (Default: NULL)
@@ -120,7 +121,7 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
     J_hic_only=0L, W_hic_init=NULL, fixW_hic=FALSE,
     lambda_coupling=Inf, init_U=NULL, fixU=NULL,
     use_shared_background=FALSE, init_g0=NULL, init_delta=NULL,
-    lambda_delta=1, fix_g0=FALSE){
+    lambda_delta=0, lambda_delta_anchor=1, fix_g0=FALSE){
     # Argument Check
     init <- match.arg(init)
     T_regularization <- match.arg(T_regularization)
@@ -144,7 +145,7 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
         T_regularization, lambda_T, T_rank, H_Sym_structure,
         lambda_balance, J_hic_only, W_hic_init, fixW_hic,
         lambda_coupling, init_U, fixU,
-        use_shared_background, init_g0, init_delta, lambda_delta, fix_g0)
+        use_shared_background, init_g0, init_delta, lambda_delta, lambda_delta_anchor, fix_g0)
     # Initialization
     int <- .initMachima2(X_RNA, X_Epi, T, fixT, pseudocount, J, init, thr,
         init_W_RNA, init_H_RNA, init_H_Sym,
@@ -176,6 +177,7 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
         sh <- .initShared(X_RNA, X_Epi, W_RNA, T, J, init_g0, init_delta)
         shared_w0 <- sh$w_0
         shared_delta <- sh$delta
+        shared_delta_init <- sh$delta_init
         shared_h_vec <- sh$h_vec
     }
     # Before Update
@@ -214,9 +216,11 @@ Machima2 <- function(X_RNA, X_Epi, label=NULL, T=NULL,
                     shared_h_vec, J, Beta, L1_W_RNA, L2_W_RNA, root, Pi_Epi)
             }
             # Update delta (cell-type deviations)
-            if(!is.infinite(lambda_delta)){
+            if(!is.infinite(lambda_delta_anchor) && !is.infinite(lambda_delta)){
+                # Update delta (skip if either penalty is Inf)
                 shared_delta <- .updateDelta(X_Epi, T, shared_w0, shared_delta,
-                    shared_h_vec, J, Beta, L1_W_RNA, L2_W_RNA, lambda_delta,
+                    shared_delta_init, shared_h_vec, J, Beta,
+                    L1_W_RNA, L2_W_RNA, lambda_delta, lambda_delta_anchor,
                     root, Pi_Epi)
             }
             # Update W_RNA and H_RNA (RNA side only, no Hi-C gradient)

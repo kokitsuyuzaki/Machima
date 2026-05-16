@@ -58,7 +58,8 @@ Machima2(
   use_shared_background = FALSE,
   init_g0 = NULL,
   init_delta = NULL,
-  lambda_delta = 1,
+  lambda_delta = 0,
+  lambda_delta_anchor = 1,
   fix_g0 = FALSE
 )
 }
@@ -169,7 +170,9 @@ Machima2(
 
 \item{init_delta}{Optional list of initial delta matrices (each n_k x J). NULL = W_RNA differential. (Default: NULL)}
 
-\item{lambda_delta}{Penalty on delta deviations. Inf = delta forced to zero. (Default: 1)}
+\item{lambda_delta}{Sparsity penalty on delta toward zero. (Default: 0)}
+
+\item{lambda_delta_anchor}{Anchoring penalty pulling delta toward its RNA-derived init. 0=no anchor, Inf=freeze at init. (Default: 1)}
 
 \item{fix_g0}{If TRUE, w_0 is not updated. (Default: FALSE)}
 }

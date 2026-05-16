@@ -62,3 +62,24 @@ expect_error(
         use_shared_background=TRUE, lambda_coupling=1),
     "mutually exclusive"
 )
+
+# lambda_delta_anchor=Inf: delta frozen at init
+set.seed(77)
+out_anchor_inf <- Machima2(X_RNA, X_Epi, J=J, num.iter=10,
+    use_shared_background=TRUE, lambda_delta_anchor=Inf)
+set.seed(77)
+out_anchor_inf1 <- Machima2(X_RNA, X_Epi, J=J, num.iter=1,
+    use_shared_background=TRUE, lambda_delta_anchor=Inf)
+expect_equal(out_anchor_inf$delta, out_anchor_inf1$delta)
+
+# lambda_delta_anchor=0: same as v1.7.0 (no anchor)
+out_no_anchor <- Machima2(X_RNA, X_Epi, J=J, num.iter=10,
+    use_shared_background=TRUE, lambda_delta_anchor=0, lambda_delta=0)
+expect_true(is.list(out_no_anchor))
+
+# lambda_delta_anchor=1 (default): delta stays near init
+set.seed(55)
+out_anchor1 <- Machima2(X_RNA, X_Epi, J=J, num.iter=20,
+    use_shared_background=TRUE, lambda_delta_anchor=1)
+# delta should not have collapsed to zero
+expect_true(max(abs(out_anchor1$delta)) > 1e-5)

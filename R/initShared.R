@@ -30,7 +30,7 @@
     }
     # h_vec: length J+1, h_0 and h_1..h_J
     h_vec <- rep(1, J + 1)
-    list(w_0 = w_0, delta = delta, h_vec = h_vec)
+    list(w_0 = w_0, delta = delta, delta_init = delta, h_vec = h_vec)
 }
 
 .initShared_List <- function(X_RNA, X_Epi, W_RNA, T, J, init_g0, init_delta){
@@ -56,5 +56,5 @@
     }
     # h_vec: shared across chroms
     h_vec <- rep(1, J + 1)
-    list(w_0 = w_0, delta = delta, h_vec = h_vec)
+    list(w_0 = w_0, delta = delta, delta_init = delta, h_vec = h_vec)
 }
